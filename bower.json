@@ -1,0 +1,28 @@
+{
+  "name": "elenpi",
+  "main": "index.js",
+  "version": "0.1.0",
+  "authors": [
+    "Gilles Coomans <gilles.coomans@gmail.com>"
+  ],
+  "description": "Small Lexer/Parser tool.",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "lexer",
+    "parser"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/nomocas/elenpi",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "statics/libs/",
+    "test",
+    "tests"
+  ]
+}
