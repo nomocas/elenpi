@@ -28,6 +28,6 @@ gulp.task('serve-test', function() {
 gulp.task('uglify', function() {
     gulp.src('index.js')
         .pipe(uglify())
-        .pipe(rename('yamvish.min.js'))
+        .pipe(rename('elenpi.min.js'))
         .pipe(gulp.dest('dist'))
 });

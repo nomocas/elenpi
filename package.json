@@ -14,12 +14,8 @@
     "url": "https://github.com/nomocas/elenpi.git"
   },
   "keywords": [
-    "mvvm",
-    "mvc",
-    "js",
-    "data-bind",
-    "templating",
-    "observable"
+    "lexer",
+    "parser"
   ],
   "author": "Gilles Coomans <gilles.coomans@gmail.com>",
   "license": "MIT",
