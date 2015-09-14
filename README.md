@@ -71,7 +71,7 @@ Adding behaviour to rule :
 ```
 
 ```javascript
-.space(?optional) : Elenpi
+.space(?needed) : Elenpi
 ```
 
 ```javascript
@@ -82,12 +82,17 @@ Adding behaviour to rule :
 .log( title ) : Elenpi
 ```
 
+
+Executing rule : (arguments order could change in the future)
+
 ```javascript
 .exec(string, descriptor, rules) : String
 ```
 
 
 ## Static API
+
+(arguments order could change in the future)
 
 ```javascript
 Elenpi.exec(string, rule, descriptor, rules) : String
