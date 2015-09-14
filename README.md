@@ -4,48 +4,78 @@ Small javascript lexer/Parser tool.
 
 Allow to describe Lexer and Parser rules with chained API.
 
-Take a look at rules examples in ./lib.
+Take a look at rules examples in [./lib](./lib).
 
 
 ## Elenpi instance API
 
-```.done(function(string, descriptor){
+```javascript
+.done(function(string, descriptor){
 	// ...
 	return string;
-}) : Elenpi```
+}) : Elenpi
+```
 
-```.regExp(RegExp, ?optional, ?String || ?function(descriptor, captured){
+```javascript
+.regExp(RegExp, ?optional, ?String || ?function(descriptor, captured){
 	descriptor.something = captured[1]; // example
-}) : Elenpi```
+}) : Elenpi
+```
 
-```.char( String ) : Elenpi```
+```javascript
+.char( String ) : Elenpi
+```
 
-```.xOrMore(as || null , rule) : Elenpi```
+```javascript
+.xOrMore(as || null , rule) : Elenpi
+```
 
-```.zeroOrMore(as || null, rule) : Elenpi```
+```javascript
+.zeroOrMore(as || null, rule) : Elenpi
+```
 
-```.oneOrMore(as || null, rule) : Elenpi```
+```javascript
+.oneOrMore(as || null, rule) : Elenpi
+```
 
-```.zeroOrOne(as || null, rule) : Elenpi```
+```javascript
+.zeroOrOne(as || null, rule) : Elenpi
+```
 
-```.oneOf(?as, Array<Rule>) : Elenpi```
+```javascript
+.oneOf(?as, Array<Rule>) : Elenpi
+```
 
-```.rule(ruleName) : Elenpi```
+```javascript
+.rule(ruleName) : Elenpi
+```
 
-```.skip() : Elenpi```
+```javascript
+.skip() : Elenpi
+```
 
-```.space(?optional) : Elenpi```
+```javascript
+.space(?optional) : Elenpi
+```
 
-```.id( String || handler, optional, lowerCase) : Elenpi```
+```javascript
+.id( String || handler, optional, lowerCase) : Elenpi
+```
 
-```.log( title ) : Elenpi```
+```javascript
+.log( title ) : Elenpi
+```
 
-```.exec(string, descriptor, rules) : String```
+```javascript
+.exec(string, descriptor, rules) : String
+```
 
 
 ## Static API
 
-```Elenpi.exec(string, rule, descriptor, rules) : String```
+```javascript
+Elenpi.exec(string, rule, descriptor, rules) : String
+```
 
 
 ## Licence
