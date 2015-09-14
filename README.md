@@ -9,43 +9,43 @@ Take a look at rules examples in ./lib.
 
 ## Elenpi instance API
 
-`.done(function(string, descriptor){
+```.done(function(string, descriptor){
 	// ...
 	return string;
-}) : Elenpi`
+}) : Elenpi```
 
-`.regExp(RegExp, ?optional, ?String || ?function(descriptor, captured){
+```.regExp(RegExp, ?optional, ?String || ?function(descriptor, captured){
 	descriptor.something = captured[1]; // example
-}) : Elenpi`
+}) : Elenpi```
 
-`.char( String ) : Elenpi`
+```.char( String ) : Elenpi```
 
-`.xOrMore(as || null , rule) : Elenpi`
+```.xOrMore(as || null , rule) : Elenpi```
 
-`.zeroOrMore(as || null, rule) : Elenpi`
+```.zeroOrMore(as || null, rule) : Elenpi```
 
-`.oneOrMore(as || null, rule) : Elenpi`
+```.oneOrMore(as || null, rule) : Elenpi```
 
-`.zeroOrOne(as || null, rule) : Elenpi`
+```.zeroOrOne(as || null, rule) : Elenpi```
 
-`.oneOf(?as, Array<Rule>) : Elenpi`
+```.oneOf(?as, Array<Rule>) : Elenpi```
 
-`.rule(ruleName) : Elenpi`
+```.rule(ruleName) : Elenpi```
 
-`.skip() : Elenpi`
+```.skip() : Elenpi```
 
-`.space(?optional) : Elenpi`
+```.space(?optional) : Elenpi```
 
-`.id( String || handler, optional, lowerCase) : Elenpi`
+```.id( String || handler, optional, lowerCase) : Elenpi```
 
-`.log( title ) : Elenpi`
+```.log( title ) : Elenpi```
 
-`.exec(string, descriptor, rules) : String`
+```.exec(string, descriptor, rules) : String```
 
 
 ## Static API
 
-`Elenpi.exec(string, rule, descriptor, rules) : String`
+```Elenpi.exec(string, rule, descriptor, rules) : String```
 
 
 ## Licence
