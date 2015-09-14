@@ -9,6 +9,22 @@ Take a look at rules examples in [./lib](./lib).
 
 ## Elenpi instance API
 
+Create a rule instance : 
+
+```javascript
+var rule = new Elenpi();
+```
+
+or using shortcut :
+
+```javascript
+var  l = Elenpi.l;
+var rule = l();
+```
+
+
+Adding behaviour to rule :
+
 ```javascript
 .done(function(string, descriptor){
 	// ...
@@ -27,15 +43,15 @@ Take a look at rules examples in [./lib](./lib).
 ```
 
 ```javascript
-.xOrMore(as || null , rule) : Elenpi
+.xOrMore(as || null , rule, ?separationRule) : Elenpi
 ```
 
 ```javascript
-.zeroOrMore(as || null, rule) : Elenpi
+.zeroOrMore(as || null, rule, ?separationRule) : Elenpi
 ```
 
 ```javascript
-.oneOrMore(as || null, rule) : Elenpi
+.oneOrMore(as || null, rule, ?separationRule) : Elenpi
 ```
 
 ```javascript
@@ -43,7 +59,7 @@ Take a look at rules examples in [./lib](./lib).
 ```
 
 ```javascript
-.oneOf(?as, Array<Rule>) : Elenpi
+.oneOf(?as, Array<rule || ruleNames>) : Elenpi
 ```
 
 ```javascript
