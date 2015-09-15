@@ -26,6 +26,7 @@
   "devDependencies": {
     "chai": "^2.2.0",
     "gulp": "^3.9.0",
+    "gulp-browserify": "^0.5.1",
     "gulp-jshint": "^1.10.0",
     "gulp-live-server": "0.0.14",
     "gulp-rename": "^1.2.2",

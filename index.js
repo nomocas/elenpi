@@ -1,42 +1,42 @@
 (function() {
     var defaultSpaceRegExp = /^[\s\n\r]+/;
 
-    function Elenpi() {
-        this._queue = [];
-        this.__lexer__ = true;
-    };
-
-    function exec(string, rule, descriptor, rules) {
+    function exec(string, rule, descriptor, parser) {
         if (typeof rule === 'string')
-            rule = rules[rule];
+            rule = parser.rules[rule];
         var rules = rule._queue;
         for (var i = 0, len = rules.length; i < len && string; ++i) {
             var current = rules[i];
             if (current.__lexer__)
-                string = exec(string, current, descriptor, rules);
+                string = exec(string, current, descriptor, parser);
             else // is function
-                string = current.call(rules, string, descriptor);
+                string = current.call(parser, string, descriptor);
             if (string === false)
                 return false;
         }
         return string;
     };
 
-    Elenpi.prototype = {
-        exec: function(string, descriptor, rules) {
-            return exec(string, this, descriptor, rules);
-        },
+    function Rule() {
+        this._queue = [];
+        this.__lexer__ = true;
+    };
+
+    Rule.prototype = {
+        // base for all rule's handlers
         done: function(callback) {
             this._queue.push(callback);
             return this;
         },
+        // for debug purpose
         log: function(title) {
             title = title || '';
             return this.done(function(string, descriptor) {
-                console.log("Elenpi.log : ", title, string, descriptor);
+                console.log("Rule.log : ", title, string, descriptor);
                 return string;
             });
         },
+        //
         regExp: function(reg, optional, as) {
             return this.done(function(string, descriptor) {
                 var cap = reg.exec(string);
@@ -45,7 +45,7 @@
                         if (typeof as === 'string')
                             descriptor[as] = cap[0];
                         else
-                            as(descriptor, cap);
+                            as.call(this, descriptor, cap);
                     }
                     return string.substring(cap[0].length);
                 }
@@ -67,11 +67,10 @@
             minimum = minimum || 0;
             return this.done(function(string, descriptor) {
                 var output = [];
-                if (name) descriptor[name] = output;
                 var newString = true,
                     count = 0;
                 while (newString && string) {
-                    var newDescriptor = name ? {} : descriptor;
+                    var newDescriptor = name ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor;
                     newString = exec(string, rule, newDescriptor, this);
                     if (newString !== false) {
                         count++;
@@ -79,14 +78,16 @@
                         if (!newDescriptor.skip)
                             output.push(newDescriptor);
                         if (separator && string) {
-                            var r = exec(string, separator, descriptor, this);
-                            if (r !== false)
-                                string = r;
+                            newString = exec(string, separator, newDescriptor, this);
+                            if (newString !== false)
+                                string = newString;
                         }
                     }
                 }
                 if (count < minimum)
                     return false;
+                if (name && output.length)
+                    descriptor[name] = output;
                 return string;
             });
         },
@@ -102,7 +103,7 @@
                 as = null;
             }
             return this.done(function(string, descriptor) {
-                var newDescriptor = as ? {} : descriptor,
+                var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
                     res = exec(string, rule, newDescriptor, this);
                 if (res !== false) {
                     if (as)
@@ -120,7 +121,7 @@
             return this.done(function(string, descriptor) {
                 var count = 0;
                 while (count < rules.length) {
-                    var newDescriptor = as ? {} : descriptor,
+                    var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
                         newString = exec(string, rules[count], newDescriptor, this);
                     if (newString !== false) {
                         if (as)
@@ -136,9 +137,9 @@
             var rule;
             return this.done(function(string, descriptor) {
                 if (!rule) {
-                    rule = this[name];
+                    rule = this.rules[name];
                     if (!rule)
-                        throw new Error('Elenpi rules not found : ', name);
+                        throw new Error('elenpi.Rule :  rules not found : ' + name);
                 }
                 return exec(string, rule, descriptor, this);
             });
@@ -151,33 +152,45 @@
         },
         space: function(needed) {
             return this.done(function(string, descriptor) {
-                var cap = (this.space || defaultSpaceRegExp).exec(string);
+                var cap = (this.rules.space || defaultSpaceRegExp).exec(string);
                 if (cap)
                     return string.substring(cap[0].length);
                 else if (needed)
                     return false;
                 return string;
             });
-        },
-        id: function(as, optional, lowerCase) {
-            return this.regExp(this.id || /^[\w-_]+/, optional, (typeof as === 'function') ? as : function(descriptor, cap) {
-                if (as)
-                    if (lowerCase)
-                        descriptor[as] = cap[0].toLowerCase();
-                    else
-                        descriptor[as] = cap[0];
-            });
         }
     };
 
-    Elenpi.exec = exec;
+    var Parser = function(rules, defaultRule) {
+        this.rules = rules;
+        this.defaultRule = defaultRule;
+    };
+    Parser.prototype = {
+        exec: function(string, descriptor, rule) {
+            if (!rule)
+                rule = this.rules[this.defaultRule];
+            return exec(string, rule, descriptor, this);
+        },
+        parse: function(string, rule) {
+            var descriptor = {};
+            var ok = this.exec(string, descriptor, rule);
+            if (ok === false || ok.length > 0)
+                return false;
+            return descriptor;
+        }
+    };
 
-    Elenpi.l = function() {
-        return new Elenpi();
+    var elenpi = {
+        r: function() {
+            return new Rule();
+        },
+        Rule: Rule,
+        Parser: Parser
     };
 
     if (typeof module !== 'undefined' && module.exports)
-        module.exports = Elenpi; // use common js if avaiable
-    else this.Elenpi = Elenpi; // assign to global window
+        module.exports = elenpi; // use common js if avaiable
+    else this.elenpi = elenpi; // assign to global window
 })();
 //___________________________________________________

@@ -31,3 +31,19 @@ gulp.task('uglify', function() {
         .pipe(rename('elenpi.min.js'))
         .pipe(gulp.dest('dist'))
 });
+
+
+
+//___________________ browserify
+
+var browserify = require('gulp-browserify');
+gulp.task('scripts', function() {
+    // Single entry point to browserify 
+    gulp.src('index.js')
+        .pipe(browserify({
+            insertGlobals: true,
+            debug: false // !gulp.env.production
+        }))
+        .pipe(rename('elenpi.js'))
+        .pipe(gulp.dest('./dist'))
+});

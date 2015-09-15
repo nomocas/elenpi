@@ -1,0 +1,9 @@
+	var parser = require("../lib/chained-methods-parser.js");
+	console.log('parser', parser);
+
+	var res = parser.parse("click ( '12', 14, true, blur(2, 4, hello( false).foo())). bar(12345)");
+	// var res = parser.parse("click()");
+
+	console.log('res : ', JSON.stringify(res, null, ' '));
+
+	console.log('end');

@@ -1,24 +1,27 @@
-var descriptor = {};
-
-var fs = require("fs");
-var text = fs.readFileSync('./test.html').toString('utf8');
-var max = 10;
-console.time("lexer (" + max + ")");
-
-for (var i = 0; i < max; ++i)
-
-    var res = Elenpi.exec(text, Elenpi.rules.document, descriptor);
 
 
-//var res = Elenpi.exec('<!-- hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello -->', Elenpi.rules.comment, descriptor);
-//var res = Elenpi.exec('<DIV>first</DIV><div>hello</div>', Elenpi.rules.children, descriptor);
-
-// var res =  calls.exec("    click ( '12', 14, true, blur(2, 4, hello( false).roo())). flup(12345)", descriptor);              
-//var res =  Elenpi.exec("flup(12345)", 'calls', descriptor);              
-//Elenpi.exec("click(true, hello(14), bye, 12)", 'call');
 
 
-console.timeEnd("lexer (" + max + ")");
+
+// var text = '<div id="hello" class=reu >foo <br> <!-- hello \n--> <span class="blu" > bar </span></div><home /> hello ';
+var text = '<div id="hello" class=reu >foo <br> <!-- hello \n--> <span class="blu" > bar </span></div><home /> hello <script type="text/javascript">var a = 12, \nb = a < 14;</script>';
+
+function perf() {
+    /*var text2 = text;
+        for (var j = 0; j < 1000; ++j)
+            text2 += '\n' + text;*/
+
+
+    //var text = '<div id="hello" class="reu" ></div>';
+    console.time("html parser")
+    for (var i = 0; i < 1000; ++i)
+        var res = parser.parse(text);
+    console.timeEnd("html parser")
+    console.log('res : ', JSON.stringify(res, null, ' '));
+}
+// perf();
+
+
 
 
 /*

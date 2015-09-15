@@ -4,24 +4,23 @@ Small javascript lexer/Parser tool.
 
 Allow to describe Lexer and Parser rules with chained API.
 
-Take a look at rules examples in [./lib](./lib).
+Take a look at examples in [./lib](./lib).
 
 
-## Elenpi instance API
+## Rule instance API
 
 Create a rule instance : 
 
 ```javascript
-var rule = new Elenpi();
+var rule = new Rule();
 ```
 
 or using shortcut :
 
 ```javascript
-var  l = Elenpi.l;
-var rule = l();
+var  r = Rule.r;
+var rule = r();
 ```
-
 
 Adding behaviour to rule :
 
@@ -29,75 +28,86 @@ Adding behaviour to rule :
 .done(function(string, descriptor){
 	// ...
 	return string;
-}) : Elenpi
+}) : Rule
 ```
 
 ```javascript
 .regExp(RegExp, ?optional, ?String || ?function(descriptor, captured){
 	descriptor.something = captured[1]; // example
-}) : Elenpi
+}) : Rule
 ```
 
 ```javascript
-.char( String ) : Elenpi
+.char( String ) : Rule
 ```
 
 ```javascript
-.xOrMore(as || null , rule, ?separationRule) : Elenpi
+.xOrMore(as || null , rule, ?separationRule) : Rule
 ```
 
 ```javascript
-.zeroOrMore(as || null, rule, ?separationRule) : Elenpi
+.zeroOrMore(as || null, rule, ?separationRule) : Rule
 ```
 
 ```javascript
-.oneOrMore(as || null, rule, ?separationRule) : Elenpi
+.oneOrMore(as || null, rule, ?separationRule) : Rule
 ```
 
 ```javascript
-.zeroOrOne(as || null, rule) : Elenpi
+.zeroOrOne(as || null, rule) : Rule
 ```
 
 ```javascript
-.oneOf(?as, Array<rule || ruleNames>) : Elenpi
+.oneOf(?as, Array<rule || ruleNames>) : Rule
 ```
 
 ```javascript
-.rule(ruleName) : Elenpi
+.rule(ruleName) : Rule
 ```
 
 ```javascript
-.skip() : Elenpi
+.skip() : Rule
 ```
 
 ```javascript
-.space(?needed) : Elenpi
+.space(?needed) : Rule
 ```
 
 ```javascript
-.id( String || handler, optional, lowerCase) : Elenpi
+.id( String || handler, optional, lowerCase) : Rule
 ```
 
 ```javascript
-.log( title ) : Elenpi
+.log( title ) : Rule
 ```
 
 
-Executing rule : (arguments order could change in the future)
+## Parser API
+
+Constructor :
+```javascript
+var parser = new Parser(rulesObject, 'defaultRulesName');
+```
+
 
 ```javascript
-.exec(string, descriptor, rules) : String
+var  r = parser.parse('a string to parse', ?ruleToApply); // parse until the end of string
+// r is false if parsing failed
+// Overwise, r is a descriptor object containing catched properties
 ```
 
-
-## Static API
-
-(arguments order could change in the future)
 
 ```javascript
-Elenpi.exec(string, rule, descriptor, rules) : String
+var descriptor = {};
+var  r = parser.exec('a string to parse', descriptor, ?ruleToApply);
+
+// r is false if parsing failed
+// Overwise, r is the string that still to be parsed
+
+// If parsing succeed, descriptor has been decorated with catched properties
 ```
 
+__see parsers examples__ in [./lib](./lib)
 
 ## Licence
 

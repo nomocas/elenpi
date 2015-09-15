@@ -4,7 +4,7 @@
  */
 if (typeof require !== 'undefined')
 	var chai = require("chai"),
-		y = require("../index");
+		elenpi = require("../index");
 
 var expect = chai.expect;
 
