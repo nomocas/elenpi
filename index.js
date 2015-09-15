@@ -173,7 +173,7 @@
             return exec(string, rule, descriptor, this);
         },
         parse: function(string, rule) {
-            var descriptor = {};
+            var descriptor = this.createDescriptor ? this.createDescriptor() : {};
             var ok = this.exec(string, descriptor, rule);
             if (ok === false || ok.length > 0)
                 return false;
