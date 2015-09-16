@@ -93,7 +93,7 @@ var parser = new Parser(rulesObject, 'defaultRulesName');
 ```javascript
 var  r = parser.parse('a string to parse', ?ruleToApply); // parse until the end of string
 // r is false if parsing failed
-// Overwise, r is a descriptor object containing catched properties
+// Otherwise, r is a descriptor object containing catched properties
 ```
 
 
@@ -102,7 +102,7 @@ var descriptor = {};
 var  r = parser.exec('a string to parse', descriptor, ?ruleToApply);
 
 // r is false if parsing failed
-// Overwise, r is the string that still to be parsed
+// Otherwise, r is the string that still to be parsed
 
 // If parsing succeed, descriptor has been decorated with catched properties
 ```
