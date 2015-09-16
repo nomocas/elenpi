@@ -1,7 +1,7 @@
 {
   "name": "elenpi",
   "main": "index.js",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "authors": [
     "Gilles Coomans <gilles.coomans@gmail.com>"
   ],

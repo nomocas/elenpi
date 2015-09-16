@@ -5,12 +5,16 @@
         if (typeof rule === 'string')
             rule = parser.rules[rule];
         var rules = rule._queue;
-        for (var i = 0, len = rules.length; i < len && string; ++i) {
+        // console.log('will execute : ', rules);
+        for (var i = 0, len = rules.length; i < len /*&& string*/ ; ++i) {
             var current = rules[i];
             if (current.__lexer__)
                 string = exec(string, current, descriptor, parser);
             else // is function
+            {
+                // console.log('is fonction : ', current._hello_);
                 string = current.call(parser, string, descriptor);
+            }
             if (string === false)
                 return false;
         }
@@ -39,6 +43,11 @@
         //
         regExp: function(reg, optional, as) {
             return this.done(function(string, descriptor) {
+                if (!string)
+                    if (optional)
+                        return string;
+                    else
+                        return false;
                 var cap = reg.exec(string);
                 if (cap) {
                     if (as) {
@@ -56,6 +65,8 @@
         },
         char: function(test, optional) {
             return this.done(function(string, descriptor) {
+                if (!string)
+                    return false;
                 if (string[0] === test)
                     return string.substring(1);
                 if (optional)
@@ -103,6 +114,8 @@
                 as = null;
             }
             return this.done(function(string, descriptor) {
+                if (!string)
+                    return string;
                 var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
                     res = exec(string, rule, newDescriptor, this);
                 if (res !== false) {
@@ -119,6 +132,8 @@
                 as = null;
             }
             return this.done(function(string, descriptor) {
+                if (!string)
+                    return false;
                 var count = 0;
                 while (count < rules.length) {
                     var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
@@ -136,6 +151,8 @@
         rule: function(name) {
             var rule;
             return this.done(function(string, descriptor) {
+                if (!string)
+                    return false;
                 if (!rule) {
                     rule = this.rules[name];
                     if (!rule)
@@ -152,12 +169,24 @@
         },
         space: function(needed) {
             return this.done(function(string, descriptor) {
+                if (!string)
+                    if (needed)
+                        return false;
+                    else
+                        return string;
                 var cap = (this.rules.space || defaultSpaceRegExp).exec(string);
                 if (cap)
                     return string.substring(cap[0].length);
                 else if (needed)
                     return false;
                 return string;
+            });
+        },
+        end: function(needed) {
+            return this.done(function(string, descriptor) {
+                if (!string || !needed)
+                    return string;
+                return false;
             });
         }
     };

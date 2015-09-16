@@ -5,6 +5,9 @@
 if (typeof require !== 'undefined')
 	var chai = require("chai"),
 		parser = require("../lib/html-parser.js");
+else
+	var parser = htmlParser;
+
 
 var expect = chai.expect;
 

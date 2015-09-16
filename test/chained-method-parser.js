@@ -5,6 +5,8 @@
 if (typeof require !== 'undefined')
 	var chai = require("chai"),
 		parser = require("../lib/chained-methods-parser.js");
+else
+	var parser = chainedMethodParser;
 
 var expect = chai.expect;
 
