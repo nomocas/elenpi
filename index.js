@@ -151,8 +151,6 @@
         rule: function(name) {
             var rule;
             return this.done(function(string, descriptor) {
-                if (!string)
-                    return false;
                 if (!rule) {
                     rule = this.rules[name];
                     if (!rule)
