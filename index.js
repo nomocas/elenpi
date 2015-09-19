@@ -1,20 +1,16 @@
 (function() {
     var defaultSpaceRegExp = /^[\s\n\r]+/;
 
-    function exec(string, rule, descriptor, parser) {
+    function exec(string, rule, descriptor, parser, opt) {
         if (typeof rule === 'string')
             rule = parser.rules[rule];
         var rules = rule._queue;
-        // console.log('will execute : ', rules);
         for (var i = 0, len = rules.length; i < len /*&& string*/ ; ++i) {
             var current = rules[i];
             if (current.__lexer__)
-                string = exec(string, current, descriptor, parser);
+                string = exec(string, current, descriptor, parser, opt);
             else // is function
-            {
-                // console.log('is fonction : ', current._hello_);
-                string = current.call(parser, string, descriptor);
-            }
+                string = current.call(parser, string, descriptor, opt);
             if (string === false)
                 return false;
         }
@@ -35,14 +31,14 @@
         // for debug purpose
         log: function(title) {
             title = title || '';
-            return this.done(function(string, descriptor) {
-                console.log("Rule.log : ", title, string, descriptor);
+            return this.done(function(string, descriptor, opt) {
+                console.log("elenpi.log : ", title, string, descriptor);
                 return string;
             });
         },
         //
         regExp: function(reg, optional, as) {
-            return this.done(function(string, descriptor) {
+            return this.done(function(string, descriptor, opt) {
                 if (!string)
                     if (optional)
                         return string;
@@ -54,7 +50,7 @@
                         if (typeof as === 'string')
                             descriptor[as] = cap[0];
                         else
-                            as.call(this, descriptor, cap);
+                            as.call(this, descriptor, cap, opt);
                     }
                     return string.substring(cap[0].length);
                 }
@@ -76,20 +72,20 @@
         },
         xOrMore: function(name, rule, separator, minimum) {
             minimum = minimum || 0;
-            return this.done(function(string, descriptor) {
+            return this.done(function(string, descriptor, opt) {
                 var output = [];
                 var newString = true,
                     count = 0;
                 while (newString && string) {
                     var newDescriptor = name ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor;
-                    newString = exec(string, rule, newDescriptor, this);
+                    newString = exec(string, rule, newDescriptor, this, opt);
                     if (newString !== false) {
                         count++;
                         string = newString;
                         if (!newDescriptor.skip)
                             output.push(newDescriptor);
                         if (separator && string) {
-                            newString = exec(string, separator, newDescriptor, this);
+                            newString = exec(string, separator, newDescriptor, this, opt);
                             if (newString !== false)
                                 string = newString;
                         }
@@ -113,11 +109,11 @@
                 rule = as;
                 as = null;
             }
-            return this.done(function(string, descriptor) {
+            return this.done(function(string, descriptor, opt) {
                 if (!string)
                     return string;
                 var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
-                    res = exec(string, rule, newDescriptor, this);
+                    res = exec(string, rule, newDescriptor, this, opt);
                 if (res !== false) {
                     if (as)
                         descriptor[as] = newDescriptor;
@@ -131,13 +127,13 @@
                 rules = as;
                 as = null;
             }
-            return this.done(function(string, descriptor) {
+            return this.done(function(string, descriptor, opt) {
                 if (!string)
                     return false;
                 var count = 0;
                 while (count < rules.length) {
                     var newDescriptor = as ? (this.createDescriptor ? this.createDescriptor() : {}) : descriptor,
-                        newString = exec(string, rules[count], newDescriptor, this);
+                        newString = exec(string, rules[count], newDescriptor, this, opt);
                     if (newString !== false) {
                         if (as)
                             descriptor[as] = newDescriptor;
@@ -149,14 +145,11 @@
             });
         },
         rule: function(name) {
-            var rule;
-            return this.done(function(string, descriptor) {
-                if (!rule) {
-                    rule = this.rules[name];
-                    if (!rule)
-                        throw new Error('elenpi.Rule :  rules not found : ' + name);
-                }
-                return exec(string, rule, descriptor, this);
+            return this.done(function(string, descriptor, opt) {
+                var rule = this.rules[name];
+                if (!rule)
+                    throw new Error('elenpi.Rule :  rules not found : ' + name);
+                return exec(string, rule, descriptor, this, opt);
             });
         },
         skip: function() {
@@ -194,14 +187,14 @@
         this.defaultRule = defaultRule;
     };
     Parser.prototype = {
-        exec: function(string, descriptor, rule) {
+        exec: function(string, descriptor, rule, opt) {
             if (!rule)
                 rule = this.rules[this.defaultRule];
-            return exec(string, rule, descriptor, this);
+            return exec(string, rule, descriptor, this, opt);
         },
-        parse: function(string, rule) {
+        parse: function(string, rule, opt) {
             var descriptor = this.createDescriptor ? this.createDescriptor() : {};
-            var ok = this.exec(string, descriptor, rule);
+            var ok = this.exec(string, descriptor, rule, opt);
             if (ok === false || ok.length > 0)
                 return false;
             return descriptor;
