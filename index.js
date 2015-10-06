@@ -1,3 +1,8 @@
+/**
+ * Todo :
+ * - oneOf : add optional flag
+ * - add string 'arg and return' management in regExp handlers
+ */
 (function() {
     var defaultSpaceRegExp = /^[\s\n\r]+/;
 
@@ -122,7 +127,7 @@
                 return string;
             });
         },
-        oneOf: function(as, rules) {
+        oneOf: function(as, rules, optional) {
             if (arguments.length === 1) {
                 rules = as;
                 as = null;
@@ -141,6 +146,8 @@
                     }
                     count++;
                 }
+                if (optional)
+                    return string;
                 return false;
             });
         },
