@@ -10,7 +10,7 @@
         if (typeof rule === 'string')
             rule = parser.rules[rule];
         var rules = rule._queue;
-        for (var i = 0, len = rules.length; i < len /*&& string*/ ; ++i) {
+        for (var i = 0, len = rules.length; i < len; ++i) {
             var current = rules[i];
             if (current.__lexer__)
                 string = exec(string, current, descriptor, parser, opt);
