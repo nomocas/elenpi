@@ -202,7 +202,7 @@
         parse: function(string, rule, opt) {
             var descriptor = this.createDescriptor ? this.createDescriptor() : {};
             var ok = this.exec(string, descriptor, rule, opt);
-            if (ok === false || ok.length > 0)
+            if (ok === false || (ok && ok.length > 0))
                 return false;
             return descriptor;
         }
