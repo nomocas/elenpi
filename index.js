@@ -18,6 +18,7 @@
                 string = current.call(parser, string, descriptor, opt);
             if (string === false)
                 return false;
+            opt.soFar = string.length;
         }
         return string;
     };
@@ -195,15 +196,21 @@
     };
     Parser.prototype = {
         exec: function(string, descriptor, rule, opt) {
+            opt = opt || {};
             if (!rule)
                 rule = this.rules[this.defaultRule];
             return exec(string, rule, descriptor, this, opt);
         },
         parse: function(string, rule, opt) {
+            opt = opt || {};
             var descriptor = this.createDescriptor ? this.createDescriptor() : {};
             var ok = this.exec(string, descriptor, rule, opt);
-            if (ok === false || (ok && ok.length > 0))
+            if (ok === false || (ok && ok.length > 0)) {
+                var pos = string.length - opt.soFar;
+                // todo : catch line number
+                console.error('elenpi parsing failed : (pos:' + pos + ') near ...', string.substring(pos, pos + 50));
                 return false;
+            }
             return descriptor;
         }
     };
