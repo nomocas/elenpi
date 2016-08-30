@@ -1,8 +1,8 @@
 # elenpi
 
-Small javascript lexer/Parser tool.
+Small javascript LL(K) Parser generator.
 
-Allow to describe Lexer and Parser rules with chained API.
+Allow to describe Lexer and Parser rules with structured Method Chaining.
 
 Take a look at examples in [./lib](./lib).
 
