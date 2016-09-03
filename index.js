@@ -1,4 +1,5 @@
 /**
+ * @author Gilles Coomans <gilles.coomans@gmail.com>
  * Todo :
  * - oneOf : add optional flag
  * - add string 'arg and return' management in regExp handlers
