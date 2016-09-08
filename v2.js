@@ -46,24 +46,31 @@
  *
  * 
  */
+
 (function() {
 	var defaultSpaceRegExp = /^[\s\n\r]+/;
 
-	function exec(string, rule, descriptor, parser, env) {
+	function exec(rule, descriptor, env) {
+		if (env.stop || env.error)
+			return;
 		if (typeof rule === 'string')
-			rule = parser.rules[rule];
-		var rules = rule._queue;
+			rule = getRule(env.parser, rule);
+		// Parser.counts.countExec++;
+		var rules = rule._queue,
+			current;
 		for (var i = 0, len = rules.length; i < len; ++i) {
-			var current = rules[i];
+			current = rules[i];
 			if (current.__elenpi__)
-				string = exec(string, current, descriptor, parser, env);
+				exec(current, descriptor, env);
 			else // is function
-				string = current.call(parser, env, descriptor, string);
-			if (string === false)
-				return false;
-			env.soFar = string.length;
+				current(env, descriptor);
+			if (env.error)
+				return;
+			if (env.soFar > env.string.length)
+				env.soFar = env.string.length;
+			if (env.stop)
+				return;
 		}
-		return string;
 	};
 
 	function getRule(parser, name) {
@@ -87,89 +94,112 @@
 		// for debug purpose
 		log: function(title) {
 			title = title || '';
-			return this.done(function(env, descriptor, string) {
-				console.log("elenpi log : ", title, string, descriptor);
-				return string;
+			return this.done(function(env, descriptor) {
+				console.log("elenpi log : ", title, env, descriptor);
 			});
 		},
 		use: function(rule) {
 			var args = [].slice.call(arguments, 1);
-			return this.done(function(env, descriptor, string) {
+			return this.done(function(env, descriptor) {
 				if (typeof rule === 'string')
-					rule = getRule(this, rule);
-				if (rule.__elenpi__)
-					return exec(string, rule, descriptor, this, env);
+					rule = getRule(env.parser, rule);
+				if (rule.__elenpi__) {
+					exec(rule, descriptor, env);
+					return;
+				}
 				var r = new Rule();
 				rule.apply(r, args);
-				return exec(string, r, descriptor, this, env);
+				exec(r, descriptor, env);
 			});
 		},
 		optional: function(rule) {
-			return this.done(function(env, descriptor, string) {
-				if (typeof rule === 'string')
-					rule = getRule(this, rule);
-				var newString = exec(string, rule, descriptor, this, env);
-				return newString === false ? string : newString;
+			return this.done(function(env, descriptor) {
+				var string = env.string;
+				exec(rule, descriptor, env);
+				if (env.error) {
+					env.string = string;
+					env.error = false;
+				}
 			});
 		},
 		terminal: function(reg, set) {
-			return this.done(function(env, descriptor, string) {
-				if (!string)
-					return false;
-				var cap = reg.exec(string);
+			return this.done(function(env, descriptor) {
+				// console.log('terminal test : ', reg);
+				if (!env.string.length) {
+					env.error = true;
+					return;
+				}
+				// Parser.counts.countTerminalTest++;
+				var cap = reg.exec(env.string);
+				// console.log('terminal : ', reg, cap);
 				if (cap) {
+					// Parser.counts.countTerminalMatched++;
+					env.string = env.string.substring(cap[0].length);
+					// console.log('terminal cap 0 length : ', cap[0].length);
+					// console.log('terminal string length : ', string.length, cap[0]);
 					if (set) {
 						if (typeof set === 'string')
 							descriptor[set] = cap[0];
 						else
-							return set.call(this, env, descriptor, string.substring(cap[0].length), cap);
+							set(env, descriptor, cap);
 					}
-					return string.substring(cap[0].length);
+					return;
 				}
-				return false;
+				env.error = true;
 			});
 		},
 		char: function(test) {
-			return this.done(function(env, descriptor, string) {
-				if (!string)
-					return false;
-				if (string[0] === test)
-					return string.substring(1);
-				return false;
+			return this.done(function(env, descriptor) {
+				if (!env.string.length || env.string[0] !== test)
+					env.error = true;
+				else
+					env.string = env.string.substring(1);
 			});
 		},
 		xOrMore: function(rule) {
-			var options = (typeof rule === 'string' ||  rule.__elenpi__) ? { rule: rule } : rule;
-			options.minimum = options.minimum || 0;
-			return this.done(function(env, descriptor, string) {
-				if (typeof options.rule === 'string')
-					options.rule = getRule(this, options.rule);
-				var newString = true,
-					count = 0;
-				while (newString && string) {
-					if (options.maximum && options.maximum === count)
-						break;
-					var newDescriptor = options.as ? options.as(env, descriptor) : (options.pushTo ? {} : descriptor);
-					newString = exec(string, options.rule, newDescriptor, this, env);
-					if (newString !== false) {
-						count++;
-						string = newString;
-						if (!newDescriptor.skip && options.pushTo)
-							if (typeof options.pushTo === 'string') {
-								descriptor[options.pushTo] = descriptor[options.pushTo] || [];
-								descriptor[options.pushTo].push(newDescriptor);
-							} else
-								options.pushTo(env, descriptor, newDescriptor);
-						if (options.separator && string) {
-							newString = exec(string, options.separator, newDescriptor, this, env);
-							if (newString !== false)
-								string = newString;
-						}
-					}
+			var opt = (typeof rule === 'string' ||  rule.__elenpi__) ? { rule: rule } : rule;
+			opt.minimum = opt.minimum || 0;
+			opt.maximum = opt.maximum || Infinity;
+			return this.done(function(env, descriptor) {
+				var options = opt;
+				if (!env.string.length && options.minimum > 0) {
+					env.error = true;
+					return;
 				}
-				if (count < options.minimum)
-					return false;
-				return string;
+				var string = env.string,
+					count = 0,
+					rule = options.rule,
+					pushTo = options.pushTo,
+					pushToString = typeof pushTo === 'string',
+					As = options.as,
+					separator = options.separator,
+					newDescriptor;
+				// Parser.counts.countXorMore++;
+				while (!env.error && env.string.length && count < options.maximum) {
+
+					// Parser.counts.countXorMores++;
+
+					newDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);
+					exec(rule, newDescriptor, env);
+
+					if (env.error)
+						break;
+
+					count++;
+
+					if (!newDescriptor.skip && pushTo)
+						if (pushToString) {
+							descriptor[pushTo] = descriptor[pushTo] || [];
+							descriptor[pushTo].push(newDescriptor);
+						} else
+							pushTo(env, descriptor, newDescriptor);
+
+					if (separator && env.string.length)
+						exec(separator, newDescriptor, env);
+				}
+				env.error = (count < options.minimum);
+				if (!count)
+					env.string = string;
 			});
 		},
 		zeroOrMore: function(rule) {
@@ -185,91 +215,106 @@
 		},
 		zeroOrOne: function(rule) {
 			var options = (typeof rule === 'string' ||  rule.__elenpi__) ? { rule: rule } : rule;
-			return this.done(function(env, descriptor, string) {
-				if (typeof options.rule === 'string')
-					options.rule = getRule(this, options.rule);
-				var newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor),
-					res = exec(string, options.rule, newDescriptor, this, env);
-				if (res !== false) {
+			return this.done(function(env, descriptor) {
+				if (!env.string.length)
+					return;
+				// Parser.counts.countZeroOrOne++;
+				var newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
+				var string = env.string;
+				exec(options.rule, newDescriptor, env);
+				if (!env.error) {
 					if (!newDescriptor.skip && options.set) {
 						if (typeof options.set === 'string')
 							descriptor[options.set] = newDescriptor;
 						else
 							options.set(env, descriptor, newDescriptor);
 					}
-					string = res;
+					return;
 				}
-				return string;
+				env.string = string;
+				env.error = false;
 			});
 		},
 		oneOf: function(rules) {
-			var options = (typeof rules === 'string' || rules.__elenpi__) ? { rules: [].slice.call(arguments) } : rules;
-			return this.done(function(env, descriptor, string) {
-				if (!string)
-					return false;
-				var count = 0;
-				while (count < options.rules.length) {
-					var rule = options.rules[count];
-					if (typeof rule === 'string')
-						rule = getRule(this, rule);
-					var newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor),
-						newString = exec(string, rule, newDescriptor, this, env);
-					if (newString !== false) {
+			var opt = (typeof rules === 'string' || rules.__elenpi__) ? { rules: [].slice.call(arguments) } : rules;
+			return this.done(function(env, descriptor) {
+				if (!env.string.length) {
+					env.error = true;
+					return;
+				}
+
+				var options = opt,
+					count = 0,
+					len = options.rules.length,
+					rule,
+					newDescriptor,
+					string = env.string;
+				// Parser.counts.countOneOf++;
+				while (count < len) {
+					rule = options.rules[count];
+					count++;
+					// Parser.counts.countOneOfs++;
+					newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
+					exec(rule, newDescriptor, env);
+					if (!env.error) {
 						if (!newDescriptor.skip && options.set) {
 							if (typeof options.set === 'string')
 								descriptor[options.set] = newDescriptor;
 							else
 								options.set(env, descriptor, newDescriptor);
 						}
-						return newString;
+						return;
 					}
-					count++;
+					env.error = false;
+					env.string = string;
 				}
-				return false;
+				env.error = true;
 			});
 		},
 		one: function(rule) {
-			var options = (typeof rule === 'string' ||  (rule && rule.__elenpi__)) ? { rule: rule } : rule;
-			return this.done(function(env, descriptor, string) {
-				if (typeof options.rule === 'string')
-					options.rule = getRule(this, options.rule);
-				var newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor),
-					newString = exec(string, options.rule, newDescriptor, this, env);
-				if (newString !== false && !newDescriptor.skip && options.set) {
+			var opt = (typeof rule === 'string' ||  (rule && rule.__elenpi__)) ? { rule: rule } : rule;
+			return this.done(function(env, descriptor) {
+				if (!env.string.length) {
+					env.error = true;
+					return;
+				}
+				// Parser.counts.countOne++;
+				var options = opt,
+					newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
+				exec(options.rule, newDescriptor, env);
+				if (!env.error && !newDescriptor.skip && options.set) {
 					if (typeof options.set === 'string')
 						descriptor[options.set] = newDescriptor;
 					else
 						options.set(env, descriptor, newDescriptor);
 				}
-				return newString;
 			});
 		},
 		skip: function() {
-			return this.done(function(env, descriptor, string) {
+			return this.done(function(env, descriptor) {
 				descriptor.skip = true;
-				return string;
 			});
 		},
 		space: function(needed) {
-			return this.done(function(env, descriptor, string) {
-				if (!string)
+			return this.done(function(env, descriptor) {
+				if (!env.string.length) {
 					if (needed)
-						return false;
-					else
-						return string;
-				var cap = (this.rules.space || defaultSpaceRegExp).exec(string);
+						env.error = true;
+					return;
+				}
+				var cap = (env.parser.rules.space || defaultSpaceRegExp).exec(env.string);
 				if (cap)
-					return string.substring(cap[0].length);
+					env.string = env.string.substring(cap[0].length);
 				else if (needed)
-					return false;
-				return string;
+					env.error = true;
 			});
 		},
 		end: function(needed) {
-			return this.done(function(env, descriptor, string) {
-				if (!string || !needed)
-					return string;
-				return false;
+			return this.done(function(env, descriptor) {
+				if (!env.string.length)
+					env.stop = true;
+				else if (needed)
+					env.error = true;
 			});
 		}
 	};
@@ -279,17 +324,19 @@
 		this.defaultRule = defaultRule;
 	};
 	Parser.prototype = {
-		exec: function(string, descriptor, rule, env) {
-			env = env || {};
-			if (!rule)
-				rule = this.rules[this.defaultRule];
-			return exec(string, rule, descriptor, this, env);
+		exec: function(rule, descriptor, env) {
+			exec(rule, descriptor, env);
 		},
 		parse: function(string, rule, descriptor, env) {
 			env = env || {};
 			descriptor = descriptor || {};
-			var ok = this.exec(string, descriptor, rule, env);
-			if (ok === false || (ok && ok.length > 0)) {
+			env.parser = this;
+			env.soFar = Infinity;
+			env.string = string;
+			if (!rule)
+				rule = this.rules[this.defaultRule];
+			exec(rule, descriptor, env);
+			if (env.error || env.string.length) {
 				var pos = string.length - env.soFar;
 				// todo : catch line number
 				console.error('elenpi parsing failed : (pos:' + pos + ') near :\n', string.substring(Math.max(pos - 1, 0), pos + 50));
@@ -298,6 +345,18 @@
 			return descriptor;
 		}
 	};
+
+	// 	Parser.counts = {
+	// 	countTerminalTest: 0,
+	// 	countTerminalMatched: 0,
+	// 	countOneOf: 0,
+	// 	countOneOfs: 0,
+	// 	countExec: 0,
+	// 	countXorMore: 0,
+	// 	countXorMores: 0,
+	// 	countZeroOrOne: 0,
+	// 	countOne: 0
+	// };
 
 	var elenpi = {
 		r: function() {
