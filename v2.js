@@ -4,13 +4,13 @@
 
 	//________ new api
 
-	done(function(env, obj, string){
+	done(function(env, obj){
 		//...
-		return string || false;
+		env.string
 	})
-	terminal(regExp, name || function(env, obj, string, captured){
+	terminal(regExp, name || function(env, obj, captured){
 		//...
-		return string || false;
+		env.string
 	})
 	char(test)
 	optional(rule)
@@ -18,23 +18,23 @@
 
 	one(rule || { 
 		rule:rule, 
-		?as:Class, 
+		?as:function(){ return Instance }, 
 		?set:'name' || function(env, parent, obj){ ... } 
 	})
 	zeroOrOne(rule || { 
 		rule:rule, 
-		?as:Class, 
+		?as:function(){ return Instance }, 
 		?set:'name' || function(env, parent, obj){ ... } 
 	})
-	oneOf([rules] || { 
+	oneOf(...rules || { 
 		rules:[rules], 
-		?as:Class, 
+		?as:function(){ return Instance }, 
 		?set:'name' || function(env, parent, obj){ ... } 
 	})
 	xOrMore({ 
 		rule:rule,
 		minimum:int,
-		?as:Class,
+		?as:function(){ return Instance }, 
 		?pushTo:'name' || function(env, parent, obj){ ... },
 		?separator:rule,
 		?maximum:int 
@@ -51,21 +51,27 @@
 	var defaultSpaceRegExp = /^[\s\n\r]+/;
 
 	function exec(rule, descriptor, env) {
+		if (env.debug)
+			console.log('debug:elenpi:exec : ', rule, descriptor, env.string, env.stop, env.error);
 		if (env.stop || env.error)
 			return;
 		if (typeof rule === 'string')
 			rule = getRule(env.parser, rule);
-		// Parser.counts.countExec++;
+
 		var rules = rule._queue,
 			current;
 		for (var i = 0, len = rules.length; i < len; ++i) {
 			current = rules[i];
 			if (current.__elenpi__)
 				exec(current, descriptor, env);
-			else // is function
+			else { // is function
 				current(env, descriptor);
-			if (env.error)
+			}
+			if (env.error) {
+				if (env.debug)
+					console.log('debug:elenpi:exec : error : ', descriptor, env.error, env.soFar, env.string);
 				return;
+			}
 			if (env.soFar > env.string.length)
 				env.soFar = env.string.length;
 			if (env.stop)
@@ -119,24 +125,21 @@
 				if (env.error) {
 					env.string = string;
 					env.error = false;
+					env.errors = null;
 				}
 			});
 		},
 		terminal: function(reg, set) {
 			return this.done(function(env, descriptor) {
-				// console.log('terminal test : ', reg);
+				if (env.debug)
+					console.log('debug:elenpi:terminal : ', reg, descriptor, env.string);
 				if (!env.string.length) {
 					env.error = true;
 					return;
 				}
-				// Parser.counts.countTerminalTest++;
 				var cap = reg.exec(env.string);
-				// console.log('terminal : ', reg, cap);
 				if (cap) {
-					// Parser.counts.countTerminalMatched++;
 					env.string = env.string.substring(cap[0].length);
-					// console.log('terminal cap 0 length : ', cap[0].length);
-					// console.log('terminal string length : ', string.length, cap[0]);
 					if (set) {
 						if (typeof set === 'string')
 							descriptor[set] = cap[0];
@@ -150,6 +153,8 @@
 		},
 		char: function(test) {
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:char : ', test, descriptor, env.string);
 				if (!env.string.length || env.string[0] !== test)
 					env.error = true;
 				else
@@ -157,11 +162,15 @@
 			});
 		},
 		xOrMore: function(rule) {
-			var opt = (typeof rule === 'string' ||  rule.__elenpi__) ? { rule: rule } : rule;
+			var opt = (typeof rule === 'string' ||  rule.__elenpi__) ? {
+				rule: rule
+			} : rule;
 			opt.minimum = opt.minimum || 0;
 			opt.maximum = opt.maximum || Infinity;
 			return this.done(function(env, descriptor) {
 				var options = opt;
+				if (env.debug)
+					console.log('debug:elenpi:xOrMore : ', options, descriptor, env.string);
 				if (!env.string.length && options.minimum > 0) {
 					env.error = true;
 					return;
@@ -174,11 +183,7 @@
 					As = options.as,
 					separator = options.separator,
 					newDescriptor;
-				// Parser.counts.countXorMore++;
 				while (!env.error && env.string.length && count < options.maximum) {
-
-					// Parser.counts.countXorMores++;
-
 					newDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);
 					exec(rule, newDescriptor, env);
 
@@ -214,11 +219,14 @@
 			return this.xOrMore(rule);
 		},
 		zeroOrOne: function(rule) {
-			var options = (typeof rule === 'string' ||  rule.__elenpi__) ? { rule: rule } : rule;
+			var options = (typeof rule === 'string' ||  rule.__elenpi__) ? {
+				rule: rule
+			} : rule;
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:zeroOrOne : ', options, descriptor, env.string);
 				if (!env.string.length)
 					return;
-				// Parser.counts.countZeroOrOne++;
 				var newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
 				var string = env.string;
 				exec(options.rule, newDescriptor, env);
@@ -233,11 +241,16 @@
 				}
 				env.string = string;
 				env.error = false;
+				env.errors = null;
 			});
 		},
 		oneOf: function(rules) {
-			var opt = (typeof rules === 'string' || rules.__elenpi__) ? { rules: [].slice.call(arguments) } : rules;
+			var opt = (typeof rules === 'string' || rules.__elenpi__) ? {
+				rules: [].slice.call(arguments)
+			} : rules;
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:oneOf ', opt, descriptor, env.string);
 				if (!env.string.length) {
 					env.error = true;
 					return;
@@ -249,11 +262,9 @@
 					rule,
 					newDescriptor,
 					string = env.string;
-				// Parser.counts.countOneOf++;
 				while (count < len) {
 					rule = options.rules[count];
 					count++;
-					// Parser.counts.countOneOfs++;
 					newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
 					exec(rule, newDescriptor, env);
 					if (!env.error) {
@@ -266,19 +277,23 @@
 						return;
 					}
 					env.error = false;
+					env.errors = null;
 					env.string = string;
 				}
 				env.error = true;
 			});
 		},
 		one: function(rule) {
-			var opt = (typeof rule === 'string' ||  (rule && rule.__elenpi__)) ? { rule: rule } : rule;
+			var opt = (typeof rule === 'string' ||  (rule && rule.__elenpi__)) ? {
+				rule: rule
+			} : rule;
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:one : ', opt, descriptor, env.string);
 				if (!env.string.length) {
 					env.error = true;
 					return;
 				}
-				// Parser.counts.countOne++;
 				var options = opt,
 					newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
 				exec(options.rule, newDescriptor, env);
@@ -297,6 +312,8 @@
 		},
 		space: function(needed) {
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:space', descriptor, env.string);
 				if (!env.string.length) {
 					if (needed)
 						env.error = true;
@@ -311,6 +328,8 @@
 		},
 		end: function(needed) {
 			return this.done(function(env, descriptor) {
+				if (env.debug)
+					console.log('debug:elenpi:end', descriptor, env.string);
 				if (!env.string.length)
 					env.stop = true;
 				else if (needed)
@@ -346,22 +365,17 @@
 		}
 	};
 
-	// 	Parser.counts = {
-	// 	countTerminalTest: 0,
-	// 	countTerminalMatched: 0,
-	// 	countOneOf: 0,
-	// 	countOneOfs: 0,
-	// 	countExec: 0,
-	// 	countXorMore: 0,
-	// 	countXorMores: 0,
-	// 	countZeroOrOne: 0,
-	// 	countOne: 0
-	// };
+	var initializer = {};
+	Object.keys(Rule.prototype).forEach(function(key) {
+		initializer[key] = function() {
+			var r = new Rule()
+			return r[key].apply(r, arguments);
+		};
+	});
 
 	var elenpi = {
-		r: function() {
-			return new Rule();
-		},
+		r: initializer,
+		exec: exec,
 		Rule: Rule,
 		Parser: Parser
 	};
