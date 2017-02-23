@@ -1,5 +1,11 @@
 # elenpi
 
+[![npm](https://img.shields.io/npm/v/elenpi.svg)]()
+[![npm-downloads](https://img.shields.io/npm/dt/elenpi.svg)]()
+[![licence](https://img.shields.io/npm/l/elenpi.svg)]()
+[![dependecies](https://img.shields.io/david/nomocas/elenpi.svg)]()
+[![dev-dependencies](https://img.shields.io/david/dev/nomocas/elenpi.svg)]()
+
 Small javascript LL(K) Parser generator.
 
 Allow to describe Lexer and Parser rules with structured Method Chaining.
