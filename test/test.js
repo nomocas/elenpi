@@ -15,15 +15,15 @@ describe(".done() after end of string", function() {
 
 
 	var rules = {
-		filters: r()
+		filters: r
 			.space()
-			.zeroOrMore('filters',
-				r().regExp(/^[\w-_]+/, false, 'method'),
-				r().regExp(/^\s*\.\s*/)
-			)
-			.done(function(string, descriptor) {
+			.zeroOrMore({ 
+				pushTo:'filters',
+				rule:r.terminal(/^[\w-_]+/, 'method'),
+				separator:r.terminal(/^\s*\.\s*/)
+			})
+			.done(function(env, descriptor) {
 				descriptor.decorated = true;
-				return string;
 			})
 	};
 

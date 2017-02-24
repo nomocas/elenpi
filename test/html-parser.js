@@ -4,7 +4,7 @@
  */
 if (typeof require !== 'undefined')
 	var chai = require("chai"),
-		parser = require("../lib/html-parser.js");
+		parser = require("../lib/html-tokenizer.js");
 else
 	var parser = htmlParser;
 
@@ -13,7 +13,7 @@ var expect = chai.expect;
 
 describe("HTML5 parser", function() {
 	describe("tag", function() {
-		var res = parser.parse('<div></div>', 'tag');
+		var res = parser('<div></div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div"
@@ -22,7 +22,7 @@ describe("HTML5 parser", function() {
 	});
 
 	describe("self closed tag", function() {
-		var res = parser.parse('<div/>', 'tag');
+		var res = parser('<div/>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div"
@@ -31,7 +31,7 @@ describe("HTML5 parser", function() {
 	});
 
 	describe("unstrict self-closing tag", function() {
-		var res = parser.parse('<br>', 'tag');
+		var res = parser('<br>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "br"
@@ -40,12 +40,12 @@ describe("HTML5 parser", function() {
 	});
 
 	describe("tag with text content", function() {
-		var res = parser.parse('<div>hello</div>', 'tag');
+		var res = parser('<div>hello</div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				childNodes: [{
-					textContent: "hello"
+				children: [{
+					textValue: "hello"
 				}]
 			});
 		});
@@ -53,32 +53,29 @@ describe("HTML5 parser", function() {
 
 
 	describe("tag with attributes", function() {
-		var res = parser.parse('<div class="hello" id=reu></div>', 'tag');
+		var res = parser('<div class="hello" id=reu></div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				attributes: [{
-					attrName: "class",
-					value: "hello"
-				}, {
-					attrName: "id",
-					value: "reu"
-				}]
+				attributes: {
+					id:"reu"
+				},
+				classes:["hello"]
 			});
 		});
 	});
 
 	describe("tag with children", function() {
-		var res = parser.parse('<div>hello <span>John</span></div>', 'tag');
+		var res = parser('<div>hello <span>John</span></div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				childNodes: [{
-					textContent: "hello "
+				children: [{
+					textValue: "hello "
 				}, {
 					tagName: "span",
-					childNodes: [{
-						textContent: "John"
+					children: [{
+						textValue: "John"
 					}]
 				}]
 			});
@@ -86,63 +83,63 @@ describe("HTML5 parser", function() {
 	});
 
 	describe("tag with children with new line and tab", function() {
-		var res = parser.parse('<div>hello \n\t<span>John</span>\n</div>', 'tag');
+		var res = parser('<div>hello \n\t<span>John</span>\n</div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				childNodes: [{
-					textContent: "hello \n\t"
+				children: [{
+					textValue: "hello \n\t"
 				}, {
 					tagName: "span",
-					childNodes: [{
-						textContent: "John"
+					children: [{
+						textValue: "John"
 					}]
 				}, {
-					textContent: "\n"
+					textValue: "\n"
 				}]
 			});
 		});
 	});
 
 	describe("tag with script", function() {
-		var res = parser.parse('<div>hello <script>var a = 12 < 15;</script></div>', 'tag');
+		var res = parser('<div>hello <script>var a = 12 < 15;</script></div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				childNodes: [{
-					textContent: "hello "
+				children: [{
+					textValue: "hello "
 				}, {
 					tagName: "script",
-					scriptContent: "var a = 12 < 15;"
+					rawContent: "var a = 12 < 15;"
 				}]
 			});
 		});
 	});
 
 	describe("tag with script with new line", function() {
-		var res = parser.parse('<div>hello <script>var a = 12 < 15;\nvar b = 0; </script></div>', 'tag');
+		var res = parser('<div>hello <script>var a = 12 < 15;\nvar b = 0; </script></div>', 'tag');
 		it("should", function() {
 			expect(res).to.deep.equals({
 				"tagName": "div",
-				childNodes: [{
-					textContent: "hello "
+				children: [{
+					textValue: "hello "
 				}, {
 					tagName: "script",
-					scriptContent: "var a = 12 < 15;\nvar b = 0; "
+					rawContent: "var a = 12 < 15;\nvar b = 0; "
 				}]
 			});
 		});
 	});
 
 	describe("comment", function() {
-		var res = parser.parse('<!-- bloupi -->', 'comment');
+		var res = parser('<!-- bloupi -->', 'comment');
 		it("should", function() {
-			expect(res).to.deep.equals({});
+			expect(res).to.deep.equals({ "comment":" bloupi " });
 		});
 	});
 
 	describe("comment with new line", function() {
-		var res = parser.parse('<!-- \rbloupi\n -->', 'comment');
+		var res = parser('<!-- \rbloupi\n -->', 'comment');
 		it("should", function() {
 			expect(res).to.deep.equals({});
 		});
@@ -150,10 +147,10 @@ describe("HTML5 parser", function() {
 
 	describe("full line", function() {
 		var text = '<div id="hello" class=reu >foo <br> <!-- hello \n--> <span class="blu" > bar </span></div><home /> hello <script type="text/javascript">var a = 12, \nb = a < 14;</script>';
-		var res = parser.parse(text, 'children');
+		var res = parser(text, 'children');
 		it("should", function() {
 			expect(res).to.deep.equals({
-				"childNodes": [{
+				"children": [{
 					"tagName": "div",
 					"attributes": [{
 						"attrName": "id",
@@ -162,8 +159,8 @@ describe("HTML5 parser", function() {
 						"attrName": "class",
 						"value": "reu"
 					}],
-					"childNodes": [{
-						"textContent": "foo "
+					"children": [{
+						"textValue": "foo "
 					}, {
 						"tagName": "br"
 					}, {
@@ -172,14 +169,14 @@ describe("HTML5 parser", function() {
 							"attrName": "class",
 							"value": "blu"
 						}],
-						"childNodes": [{
-							"textContent": " bar "
+						"children": [{
+							"textValue": " bar "
 						}]
 					}]
 				}, {
 					"tagName": "home"
 				}, {
-					"textContent": " hello "
+					"textValue": " hello "
 				}, {
 					"tagName": "script",
 					"attributes": [{
@@ -197,14 +194,14 @@ describe("HTML5 parser", function() {
 		// from elenpi/index.html (mocha tests index for browser)
 		var doc = '<!-- foo\n -->\n<!-- bar\n -->\n\n<!DOCTYPE html>' + '<html>' + '\n' + '<head>' + '<meta charset="utf-8">' + '<title>elenpi mocha tests</title>' + '<link rel="stylesheet" href="./test/mocha.css" />' + '<style>' + '#fixture {' + 'position: absolute;' + 'top: -9999;' + 'left: -9999;' + '}' + '' + ';' + '</style>' + '<script type="text/javascript" src="./index.js"></script>' + '<script src="./test/chai.js"></script>' + '<script src="./test/mocha.js"></script>' + '<script>' + 'mocha.setup("bdd");' + '</script>' + '<script src="./test/test.js"></script>' + '<script>' + 'window.onload = function() {' + 'mocha.run()' + '};' + '</script>' + '</head>' + '\n' + '<body>' + '<h2 style="margin-left:30px;"><a href="https://github.com/nomocas/elenpi">elenpi</a> tests</h2>' + '<div id="mocha"></div>' + '</body>' + '</html>';
 
-		var res = parser.parse(doc);
+		var res = parser(doc);
 		it("should", function() {
 			expect(res).to.deep.equals({
-				"childNodes": [{
+				"children": [{
 					"tagName": "html",
-					"childNodes": [{
+					"children": [{
 						"tagName": "head",
-						"childNodes": [{
+						"children": [{
 							"tagName": "meta",
 							"attributes": [{
 								"attrName": "charset",
@@ -212,8 +209,8 @@ describe("HTML5 parser", function() {
 							}]
 						}, {
 							"tagName": "title",
-							"childNodes": [{
-								"textContent": "elenpi mocha tests"
+							"children": [{
+								"textValue": "elenpi mocha tests"
 							}]
 						}, {
 							"tagName": "link",
@@ -226,8 +223,8 @@ describe("HTML5 parser", function() {
 							}]
 						}, {
 							"tagName": "style",
-							"childNodes": [{
-								"textContent": "#fixture {position: absolute;top: -9999;left: -9999;};"
+							"children": [{
+								"textValue": "#fixture {position: absolute;top: -9999;left: -9999;};"
 							}]
 						}, {
 							"tagName": "script",
@@ -265,23 +262,23 @@ describe("HTML5 parser", function() {
 						}]
 					}, {
 						"tagName": "body",
-						"childNodes": [{
+						"children": [{
 							"tagName": "h2",
 							"attributes": [{
 								"attrName": "style",
 								"value": "margin-left:30px;"
 							}],
-							"childNodes": [{
+							"children": [{
 								"tagName": "a",
 								"attributes": [{
 									"attrName": "href",
 									"value": "https://github.com/nomocas/elenpi"
 								}],
-								"childNodes": [{
-									"textContent": "elenpi"
+								"children": [{
+									"textValue": "elenpi"
 								}]
 							}, {
-								"textContent": " tests"
+								"textValue": " tests"
 							}]
 						}, {
 							"tagName": "div",

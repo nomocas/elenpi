@@ -5,9 +5,10 @@
 if (typeof require !== 'undefined')
 	var chai = require("chai"),
 		parser = require("../lib/chained-methods-parser.js");
-else
+else{
 	var parser = chainedMethodParser;
-
+	var r = elenpi.r;
+}
 var expect = chai.expect;
 
 describe("Chained Methods Parser", function() {
