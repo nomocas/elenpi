@@ -3,6 +3,7 @@
   "version": "0.3.2",
   "description": "Small Lexer/Parser tool.",
   "main": "index.js",
+  "module": "index.es6.js",
   "directories": {
     "test": "test"
   },
@@ -24,6 +25,9 @@
   },
   "homepage": "https://github.com/nomocas/elenpi",
   "devDependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-unassert": "^2.1.2",
+    "babel-preset-es2015": "^6.22.0",
     "chai": "^2.2.0",
     "gulp": "^3.9.0",
     "gulp-browserify": "^0.5.1",
