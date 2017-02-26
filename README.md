@@ -17,6 +17,8 @@ Allow to describe Lexer and Parser rules with structured sentences based on Meth
 
 Take a look at examples in [./src/examples](https://github.com/nomocas/elenpi/tree/master/src/examples).
 
+[Esdoc references](https://doc.esdoc.org/github.com/nomocas/elenpi/)
+
 ## Rule's Api
 
 Create a rule instance : 
