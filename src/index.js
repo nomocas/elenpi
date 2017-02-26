@@ -3,17 +3,15 @@
  * @author Gilles Coomans
  */
 
-import { Parser, exec } from './parser.js';
-import { Rule, r } from './rule.js';
+import Parser from './parser.js';
+import Rule from './rule.js';
 
 /**
- * elenpi export object
+ * elenpi export object { Rule, Parser }
  * @type {Object}
  * @public
  */
 const elenpi = {
-	r,
-	exec,
 	Rule,
 	Parser
 };

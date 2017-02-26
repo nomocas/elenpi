@@ -2,9 +2,10 @@
  * @Author: Gilles Coomans
  */
 
-import { exec } from './parser.js';
+import Parser from './parser.js';
 
-const defaultSpaceRegExp = /^\s+/;
+const defaultSpaceRegExp = /^\s+/,
+	exec = Parser.exec;
 
 /**
  * The Rule base class.
@@ -24,7 +25,6 @@ class Rule {
 	 * the base handler for every other lexems
 	 * @param  {Function} callback the callback to handle string
 	 * @return {Rule}          this rule handler
-	 * @public
 	 */
 	done(callback) {
 		this._queue.push(callback);
@@ -104,37 +104,41 @@ class Rule {
 		opt.minimum = opt.minimum || 0;
 		opt.maximum = opt.maximum || Infinity;
 		return this.done((env, descriptor) => {
-			const options = opt;
 
 			if (opt.minimum && !env.string.length) {
 				env.error = true;
 				return;
 			}
 
-			const rule = options.rule,
-				pushTo = options.pushTo,
+			const rule = opt.rule,
+				pushTo = opt.pushTo,
 				pushToString = typeof pushTo === 'string',
-				As = options.as,
-				separator = options.separator;
+				As = opt.as,
+				separator = opt.separator;
 
 			let count = 0,
 				currentPosition,
-				newDescriptor;
+				newDescriptor,
+				restLength;
 
-			while (!env.error && env.string.length && count < options.maximum) {
+			while (env.string.length && count < opt.maximum) {
+				
 				newDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);
 				currentPosition = env.string.length;
+
 				exec(rule, newDescriptor, env);
 
+				restLength = env.string.length;
+
 				if (env.error) {
-					if (currentPosition === env.string.length) {
+					if (currentPosition === restLength) // has not moved deeper : so try next rule
 						env.error = false;
-					}
 					break;
 				}
 
 				count++;
 
+				// store new descriptor in parent descriptor
 				if (!newDescriptor.skip && pushTo)
 					if (pushToString) {
 						descriptor[pushTo] = descriptor[pushTo] || [];
@@ -142,8 +146,9 @@ class Rule {
 					} else
 						pushTo(env, descriptor, newDescriptor);
 
-				if (separator && env.string.length) {
-					currentPosition = env.string.length;
+				// manage separator
+				if (separator && restLength) {
+					currentPosition = restLength;
 					exec(separator, newDescriptor, env);
 					if (env.error) {
 						if (currentPosition === env.string.length)
@@ -153,7 +158,7 @@ class Rule {
 				}
 			}
 
-			if (!env.error && count < options.minimum) {
+			if (!env.error && count < opt.minimum) {
 				env.error = true;
 				env.errorMessage = "missing xOrMore item : " + rule;
 			}
@@ -201,8 +206,7 @@ class Rule {
 				return;
 			}
 
-			const options = opt,
-				len = options.rules.length,
+			const len = opt.rules.length,
 				currentPosition = env.string.length;
 
 			let count = 0,
@@ -210,21 +214,16 @@ class Rule {
 				newDescriptor;
 
 			while (count < len) {
-				rule = options.rules[count];
-				count++;
-				newDescriptor = options.as ? options.as(env, descriptor) : (options.set ? {} : descriptor);
+				rule = opt.rules[count++];
+				newDescriptor = opt.as ? opt.as(env, descriptor) : (opt.set ? {} : descriptor);
 				exec(rule, newDescriptor, env);
 				if (env.error) {
 					if (env.string.length === currentPosition) {
 						env.error = false;
 						continue;
 					}
-				} else if (!newDescriptor.skip && options.set) {
-					if (typeof options.set === 'string')
-						descriptor[options.set] = newDescriptor;
-					else
-						options.set(env, descriptor, newDescriptor);
-				}
+				} else
+					setDescriptor(descriptor, newDescriptor, opt.set, env);
 				return;
 			}
 			if (!opt.optional)
@@ -263,12 +262,9 @@ class Rule {
 				currentPosition = env.string.length;
 
 			exec(opt.rule, newDescriptor, env);
-			if (!env.error && !newDescriptor.skip && opt.set) {
-				if (typeof opt.set === 'string')
-					descriptor[opt.set] = newDescriptor;
-				else
-					opt.set(env, descriptor, newDescriptor);
-			} else if (opt.optional && env.string.length === currentPosition)
+			if (!env.error)
+				setDescriptor(descriptor, newDescriptor, opt.set, env);
+			else if (opt.optional && env.string.length === currentPosition)
 				env.error = false;
 		});
 	}
@@ -297,7 +293,7 @@ class Rule {
 	}
 
 	/**
-	 * match a space
+	 * match a space (any spaces, or carriage returns, or new lines)
 	 * @param  {Boolean} needed true if space is needed. false otherwise.
 	 * @return {Rule}          this rule handler
 	 */
@@ -340,23 +336,32 @@ class Rule {
 	}
 }
 
+function setDescriptor(descriptor, newDescriptor, set, env) {
+	if (!newDescriptor.skip && set)
+		if (typeof set === 'string')
+			descriptor[set] = newDescriptor;
+		else
+			set(env, descriptor, newDescriptor);
+}
 
-/**
- * rules initializer object
- * @public
- * @type {Object}
- */
 const r = {};
 
 Object.getOwnPropertyNames(Rule.prototype) // because Babel make prototype methods not enumerable
 	.forEach((key) => {
 		if (typeof Rule.prototype[key] === 'function')
 			r[key] = function() {
-				const r = new Rule();
-				return r[key].apply(r, arguments);
+				const rule = new Rule();
+				return rule[key].apply(rule, arguments);
 			};
 	});
 
+/**
+ * Rule initializer object (all the Rul's API for starting rule's sentences)
+ * @type {Object}
+ * @public
+ * @static
+ */
+Rule.initializer = r;
 
-export { Rule, r };
+export default Rule;
 

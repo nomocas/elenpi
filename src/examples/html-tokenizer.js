@@ -4,8 +4,9 @@
  */
 
 import elenpi from '../index.js';
-const r = elenpi.r,
+const r = elenpi.Rule.initializer,
 	Parser = elenpi.Parser,
+	exec = Parser.exec,
 	attributeExpr = /^([\w-_]+)\s*(?:=\s*("([^"]*)"|[\w-_]+))?\s*/,
 	openTags = /^(br|input|img|area|base|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)/,
 	onlySpace = /^\s+$/,
@@ -78,9 +79,9 @@ const rules = {
 					return rawContent(obj.tagName, env, obj);
 
 				// get inner tag content
-				elenpi.exec(env.parser.rules.children, obj, env);
+				exec(env.parser.rules.children, obj, env);
 				if (!env.error) // close tag
-					elenpi.exec(env.parser.rules.tagEnd, obj, env);
+					exec(env.parser.rules.tagEnd, obj, env);
 			}),
 			// strict self closed tag
 			r.terminal(/^\/>/),
@@ -91,24 +92,17 @@ const rules = {
 // raw inner content of tag
 function rawContent(tagName, env, tag) {
 	const index = env.string.indexOf('</' + tagName + '>');
-	let raw;
 	if (index === -1) {
-		env.errors = env.errors || [];
-		env.errors.push(tagName + ' tag badly closed.');
+		env.error = true;
+		env.errorMessage = tagName + ' tag not closed.';
 		return;
 	}
-	if (index) { // more than 0
-		raw = env.string.substring(0, index);
-		tag.rawContent = raw;
-	}
+	if (index) // more than 0
+		tag.rawContent = env.string.substring(0, index);
 	env.string = env.string.substring(index + tagName.length + 3);
 }
 
 const parser = new Parser(rules, 'children');
 
-function parse(htmlString, rule, descriptor, env) {
-	return parser.parse(htmlString, rule, descriptor, env);
-}
-
-export default parse;
+export default parser;
 

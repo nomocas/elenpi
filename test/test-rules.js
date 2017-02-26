@@ -6,7 +6,7 @@
 import chai from 'chai';
 import elenpi from '../src/index.js';
 
-const r = elenpi.r;
+const r = elenpi.Rule.initializer;
 const expect = chai.expect;
 chai.should();
 
@@ -19,7 +19,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'filters');
 
 		it("should", () => {
-			expect(parser.parse.bind(parser, 'b')).to.throws('Parsing failed : unknown : (line:1 , col:0) near :\n');
+			expect(parser.parse.bind(parser, 'b')).to.throws('Parsing failed : no rules matched : (line:1 , col:0) near :\n');
 		});
 	});
 	describe(".done() after end of string", () => {

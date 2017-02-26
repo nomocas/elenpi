@@ -6,7 +6,7 @@
 /* global describe, it */
 import chai from 'chai';
 // import elenpi from '../src/index.js';
-import parse from '../src/examples/html-tokenizer.js';
+import parser from '../src/examples/html-tokenizer.js';
 
 // const r = elenpi.r;
 const expect = chai.expect;
@@ -14,7 +14,7 @@ chai.should();
 
 describe("HTML5 parse", () => {
 	describe("tag", () => {
-		const res = parse('<div></div>', 'tag');
+		const res = parser.parse('<div></div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div"
@@ -23,7 +23,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("self closed tag", () => {
-		const res = parse('<div/>', 'tag');
+		const res = parser.parse('<div/>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div"
@@ -32,7 +32,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("unstrict self-closing tag", () => {
-		const res = parse('<br>', 'tag');
+		const res = parser.parse('<br>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "br"
@@ -41,7 +41,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("open tag", () => {
-		const res = parse('<meta>', 'tag');
+		const res = parser.parse('<meta>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "meta"
@@ -49,7 +49,7 @@ describe("HTML5 parse", () => {
 		});
 	});
 	describe("open tag + closed just after", () => {
-		const res = parse('<meta><title>ho</title>', 'children');
+		const res = parser.parse('<meta><title>ho</title>', 'children');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				children: [{
@@ -64,7 +64,7 @@ describe("HTML5 parse", () => {
 		});
 	});
 	describe("tag with text content", () => {
-		const res = parse('<div>hello</div>', 'tag');
+		const res = parser.parse('<div>hello</div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -77,7 +77,7 @@ describe("HTML5 parse", () => {
 
 
 	describe("tag with attributes", () => {
-		const res = parse('<div class="hello" id=reu></div>', 'tag');
+		const res = parser.parse('<div class="hello" id=reu></div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -90,7 +90,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("tag with children", () => {
-		const res = parse('<div>hello <span>John</span></div>', 'tag');
+		const res = parser.parse('<div>hello <span>John</span></div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -107,7 +107,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("tag with children with new line and tab", () => {
-		const res = parse('<div>hello \n\t<span>John</span>\n</div>', 'tag');
+		const res = parser.parse('<div>hello \n\t<span>John</span>\n</div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -124,7 +124,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("tag with script", () => {
-		const res = parse('<div>hello <script>var a = 12 < 15;</script></div>', 'tag');
+		const res = parser.parse('<div>hello <script>var a = 12 < 15;</script></div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -139,7 +139,7 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("tag with script with new line", () => {
-		const res = parse('<div>hello <script>var a = 12 < 15;\nvar b = 0; </script></div>', 'tag');
+		const res = parser.parse('<div>hello <script>var a = 12 < 15;\nvar b = 0; </script></div>', 'tag');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				tagName: "div",
@@ -154,14 +154,14 @@ describe("HTML5 parse", () => {
 	});
 
 	describe("comment", () => {
-		const res = parse('<!-- bloupi -->', 'comment');
+		const res = parser.parse('<!-- bloupi -->', 'comment');
 		it("should", () => {
 			expect(res).to.deep.equals({ comment: " bloupi " });
 		});
 	});
 
 	describe("comment with new line", () => {
-		const res = parse('<!-- \rbloupi\n -->', 'comment');
+		const res = parser.parse('<!-- \rbloupi\n -->', 'comment');
 		it("should", () => {
 			expect(res).to.deep.equals({ comment: ' \rbloupi\n ' });
 		});
@@ -169,7 +169,7 @@ describe("HTML5 parse", () => {
 
 	describe("full line", () => {
 		const text = '<div id="hello" class=reu >foo <br> <!-- hello \n--> <span class="blu" > bar </span></div><home /> hello <script type="text/javascript">var a = 12, \nb = a < 14;</script>';
-		const res = parse(text, 'children');
+		const res = parser.parse(text, 'children');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				children: [{
@@ -244,7 +244,7 @@ describe("HTML5 parse", () => {
 	</body>
 </html>`;
 
-		const res = parse(doc, 'document');
+		const res = parser.parse(doc, 'document');
 		it("should", () => {
 			expect(res).to.deep.equals({
 				children: [{

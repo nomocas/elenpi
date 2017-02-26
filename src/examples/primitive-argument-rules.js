@@ -3,7 +3,13 @@
  * elenpi rules for primitives function's arguments. aka : "double", 'single', 1.12, 14, true, false
  */
 import elenpi from '../index.js';
-const r = elenpi.r;
+const r = elenpi.Rule.initializer;
+
+/**
+ * example of rules for parsing arguments somewhere
+ * @type {Object}
+ * @private
+ */
 const rules = {
 	doublestring: r.terminal(/^"([^"]*)"/, (env, descriptor, cap) => {
 		descriptor.arguments.push(cap[1]);

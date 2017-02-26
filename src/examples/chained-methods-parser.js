@@ -4,7 +4,7 @@
  */
 
 import elenpi from '../index.js';
-const r = elenpi.r,
+const r = elenpi.Rule.initializer,
 	Parser = elenpi.Parser;
 
 const rules = {
@@ -37,8 +37,7 @@ const rules = {
 			obj.method = cap[1];
 		})
 		.maybeOne(
-			r
-			.terminal(/^\(\s*/)
+			r.terminal(/^\(\s*/)
 			.zeroOrMore({
 				rule: r.oneOf('integer', 'bool', 'singlestring', 'doublestring', 'calls'),
 				pushTo: 'arguments',

@@ -7,9 +7,9 @@
 [![dependecies](https://img.shields.io/david/nomocas/elenpi.svg)]()
 [![dev-dependencies](https://img.shields.io/david/dev/nomocas/elenpi.svg)]()
 
-Small javascript LL(1) Parser generator.
+Small javascript LL(1) Parser generator through simple and expressive DSL.
 
-Allow to describe Lexer and Parser rules with structured Method Chaining.
+Allow to describe Lexer and Parser rules with structured sentences based on Method Chaining.
 
 Take a look at examples in [./src/examples](./src/examples).
 
