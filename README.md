@@ -1,5 +1,6 @@
 # elenpi
 
+[![Travis branch](https://img.shields.io/travis/nomocas/elenpi/master.svg)](https://travis-ci.org/nomocas/elenpi)
 [![npm](https://img.shields.io/npm/v/elenpi.svg)]()
 [![npm-downloads](https://img.shields.io/npm/dm/elenpi.svg)]()
 [![licence](https://img.shields.io/npm/l/elenpi.svg)]()
