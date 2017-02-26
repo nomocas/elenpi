@@ -33,7 +33,7 @@
     "lexer",
     "parser",
     "dsl",
-    "llk"
+    "ll1"
   ],
 
   "homepage": "https://github.com/nomocas/elenpi",
