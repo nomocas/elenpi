@@ -11,7 +11,7 @@ Small javascript LL(1) Parser generator.
 
 Allow to describe Lexer and Parser rules with structured Method Chaining.
 
-Take a look at examples in [./lib](./lib).
+Take a look at examples in [./src/examples](./src/examples).
 
 
 ## Rule instance API
@@ -141,7 +141,7 @@ var  r = parser.parse('a string to parse', ruleToApply = null, objectWhereStoreT
 // If parsing succeed, descriptor has been decorated with catched properties
 ```
 
-__see parsers examples__ in [./lib](./lib)
+__see parsers examples__ in [./src/examples](./src/examples)
 
 ## Licence
 
