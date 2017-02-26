@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	doublestring: /^"([^"]*)"/,
 	singlestringArg: /^'([^']*)'/,
 	floatArg: /^[0-9]*\.[0-9]+/,

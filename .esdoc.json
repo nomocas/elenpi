@@ -1,0 +1,11 @@
+{
+	"source": "./src",
+	"destination": "./doc",
+	"test": {
+		"type": "mocha",
+		"source": "./test"
+	},
+	"coverage": true,
+	"styles": ["../babelute-doc-css/src/style.css"],
+	"includeSource": true
+}

@@ -1,40 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
 
-<head>
-    <meta charset="utf-8">
-    <title>elenpi mocha tests</title>
-    <link rel="stylesheet" href="./test/mocha.css" />
-    <style>
-    #fixture {
-        position: absolute;
-        top: -9999;
-        left: -9999;
-    }
-    
-    ;
-    </style>
-    <script type="text/javascript" src="./index.js"></script>
-    <script type="text/javascript" src="./lib/chained-methods-parser.js"></script>
-    <script type="text/javascript" src="./lib/html-parser.js"></script>
-    <script src="./test/chai.js"></script>
-    <script src="./test/mocha.js"></script>
-    <script>
-    mocha.setup('bdd');
-    </script>
-    <script src="./test/test.js"></script>
-    <script src="./test/chained-method-parser.js"></script>
-    <script src="./test/html-parser.js"></script>
-    <script>
-    window.onload = function() {
-        mocha.run()
-    };
-    </script>
-</head>
-
-<body>
-    <h2 style="margin-left:30px;"><a href="https://github.com/nomocas/elenpi">elenpi</a> tests</h2>
-    <div id="mocha"></div>
-</body>
-
+    	<script type="text/javascript" src="dist/index.js"></script>
+    </body>
 </html>
