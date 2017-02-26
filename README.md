@@ -11,10 +11,13 @@ Small javascript LL(1) Parser generator through simple and expressive DSL.
 
 Allow to describe Lexer and Parser rules with structured sentences based on Method Chaining.
 
-Take a look at examples in [./src/examples](./src/examples).
+- less than 2ko gzip/minified
+- easy DSL prototyping
+- quite fast
 
+Take a look at examples in [./src/examples](https://github.com/nomocas/elenpi/tree/master/src/examples).
 
-## Rule instance API
+## Rule's Api
 
 Create a rule instance : 
 
@@ -25,11 +28,11 @@ var rule = new Rule();
 or using shortcut :
 
 ```javascript
-var  r = Rule.r;
+var  r = Rule.initializer;
 var rule = r.oneOf(...);
 ```
 
-Adding behaviour to rule :
+Behaviour : 
 
 ```javascript
 .done(function(env, obj){
@@ -48,9 +51,6 @@ Adding behaviour to rule :
 ```javascript
 .char( String ) : Rule
 ```
-```javascript
-.optional(rule) : Rule
-```
 
 ```javascript
 .end() : Rule
@@ -68,9 +68,7 @@ Adding behaviour to rule :
 .space(?needed) : Rule
 ```
 
-```javascript
-.log( title ) : Rule
-```
+Match elements in strings through one rule :
 
 ```javascript
 .one(rule || { 
@@ -79,6 +77,38 @@ Adding behaviour to rule :
 	?set:'name' || function(env, parent, obj){ ... } 
 }) : Rule
 ```
+
+```javascript
+.maybeOne(rule || { 
+	rule:rule, 
+	?as:function(){ return Instance }, 
+	?set:'name' || function(env, parent, obj){ ... } 
+}) : Rule
+```
+
+Match elements in strings through one of provided rules :
+
+```javascript
+.oneOf(...rules || { 
+	rules:[rules], 
+	?as:function(){ return Instance }, 
+	?set:'name' || function(env, parent, obj){ ... } 
+}) : Rule
+```
+
+```javascript
+.maybeOneOf(...rules || {
+	rules:[rules], 
+	?as:function(){ return Instance }, 
+	?set:'name' || function(env, parent, obj){ ... } 
+})
+```
+
+```javascript
+.error(msg)
+```
+
+Match x or more element in string with provided rule (and maybe a separator rule) :
 
 ```javascript
 .xOrMore({ 
@@ -91,6 +121,8 @@ Adding behaviour to rule :
 }) : Rule
 ```
 
+xOrMore shortcuts : 
+
 ```javascript
 .zeroOrMore(opt /* as above in xOrMore */) : Rule
 ```
@@ -99,24 +131,8 @@ Adding behaviour to rule :
 .oneOrMore(opt /* as above in xOrMore (minimum = 1) */) : Rule
 ```
 
-```javascript
-.zeroOrOne(rule || { 
-	rule:rule, 
-	?as:function(){ return Instance }, 
-	?set:'name' || function(env, parent, obj){ ... } 
-}) : Rule
-```
 
-```javascript
-.oneOf(...rules || { 
-	rules:[rules], 
-	?as:function(){ return Instance }, 
-	?set:'name' || function(env, parent, obj){ ... } 
-}) : Rule
-```
-
-
-## Parser API
+## Parser's API
 
 Constructor :
 ```javascript
@@ -141,7 +157,7 @@ var  r = parser.parse('a string to parse', ruleToApply = null, objectWhereStoreT
 // If parsing succeed, descriptor has been decorated with catched properties
 ```
 
-__see parsers examples__ in [./src/examples](./src/examples)
+__see parsers examples__ in [./src/examples](https://github.com/nomocas/elenpi/tree/master/src/examples)
 
 ## Licence
 
