@@ -60,6 +60,7 @@ dist
 yarn.lock
 doc
 plato
+.coveralls.yml
 
 
 
