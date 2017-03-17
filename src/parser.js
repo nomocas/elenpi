@@ -1,8 +1,7 @@
 /*
 * @Author: Gilles Coomans
-* @Date:   2017-02-26 01:27:44
 * @Last Modified by:   Gilles Coomans
-* @Last Modified time: 2017-02-26 14:46:43
+* @Last Modified time: 2017-03-17 15:20:54
 */
 
 /**
@@ -51,8 +50,8 @@ class Parser {
 	 * @return {Object}            the decorated descriptor
 	 * @throws {Error} If parsing fail (for any reason)
 	 */
-	parse(string, rule = null, descriptor = {}) {
-		const env = {};
+	parse(string, rule = null, descriptor = {}, env = null) {
+		env = env || {};
 		env.parser = this;
 		env.string = string;
 		rule = rule || this.getRule(this.defaultRule);
