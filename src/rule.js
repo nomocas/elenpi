@@ -33,21 +33,22 @@ class Rule {
 
 	/**
 	 * use another rule  
-	 * @param  {String|Rule} rule the rule to use
+	 * @param  {String|Rule|function} rule the rule to use
 	 * @return {Rule}          this rule handler
 	 */
 	use(rule) {
-		const args = [].slice.call(arguments, 1);
+		// const args = [].slice.call(arguments, 1);
 		return this.done((env, descriptor) => {
 			if (typeof rule === 'string')
 				rule = env.parser.getRule(rule);
 			if (rule.__elenpi__) {
 				exec(rule, descriptor, env);
-			} else {
+			}
+			/* else if(typeof rule === 'function') {
 				const r = new Rule();
 				rule.apply(r, args);
 				exec(r, descriptor, env);
-			}
+			}*/
 		});
 	}
 
