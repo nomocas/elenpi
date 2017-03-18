@@ -19,7 +19,7 @@ const rules = {
 		.one('children')
 		.space(),
 
-	comment: r.terminal(/^<!--([\s\S]*)?(?=-->)-->/, (env, obj, cap) => { obj.comment = cap[1]; }),
+	comment: r.terminal(/^<!--([\s\S]*)?(?=-->)-->/, (env, obj, cap) => obj.comment = cap[1]),
 
 	// closing tag
 	tagEnd: r.terminal(/^\s*<\/([\w-_\:]+)\s*>/, (env, obj, cap) => {
