@@ -1,6 +1,7 @@
 # elenpi
 
 [![Travis branch](https://img.shields.io/travis/nomocas/elenpi/master.svg)](https://travis-ci.org/nomocas/elenpi)
+[![bitHound Overall Score](https://www.bithound.io/github/nomocas/elenpi/badges/score.svg)](https://www.bithound.io/github/nomocas/elenpi)
 [![Coverage Status](https://coveralls.io/repos/github/nomocas/elenpi/badge.svg?branch=master)](https://coveralls.io/github/nomocas/elenpi?branch=master)
 [![npm](https://img.shields.io/npm/v/elenpi.svg)]()
 [![npm-downloads](https://img.shields.io/npm/dm/elenpi.svg)]()
