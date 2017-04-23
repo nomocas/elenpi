@@ -14,9 +14,10 @@
     "test": "mocha",
     "karma": "karma start",
     "cover": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/*.js",
-    "coveralls": "cross-env NODE_ENV=test nyc npm test && nyc report --reporter=text-lcov | coveralls",
+    "coveralls": "npm run cover && cat ./coverage/lcov.info | coveralls",
     "analyse": "es6-plato -r -d plato src",
-    "prepublish": "npm test"
+    "version": "auto-changelog --package; git add CHANGELOG.md",
+    "prepublish": "npm test && npm run version"
   },
   "repository": {
     "type": "git",
