@@ -11,21 +11,15 @@ const r = elenpi.Rule.initializer;
  * @private
  */
 const rules = {
-	doublestring: r.terminal(/^"([^"]*)"/, (env, descriptor, cap) => {
-		descriptor.arguments.push(cap[1]);
-	}),
-	singlestring: r.terminal(/^'([^']*)'/, (env, descriptor, cap) => {
-		descriptor.arguments.push(cap[1]);
-	}),
-	float: r.terminal(/^[0-9]*\.[0-9]+/, (env, descriptor, cap) => {
-		descriptor.arguments.push(parseFloat(cap[0], 10));
-	}),
-	integer: r.terminal(/^[0-9]+/, (env, descriptor, cap) => {
-		descriptor.arguments.push(parseInt(cap[0], 10));
-	}),
-	bool: r.terminal(/^(true|false)/, (env, descriptor, cap) => {
-		descriptor.arguments.push((cap[1] === 'true') ? true : false);
-	})
+	doublestring: r.terminal(/^"([^"]*)"/, (env, descriptor, cap) => descriptor.arguments.push(cap[1])),
+
+	singlestring: r.terminal(/^'([^']*)'/, (env, descriptor, cap) => descriptor.arguments.push(cap[1])),
+	
+	float: r.terminal(/^[0-9]*\.[0-9]+/, (env, descriptor, cap) => descriptor.arguments.push(parseFloat(cap[0], 10))),
+	
+	integer: r.terminal(/^[0-9]+/, (env, descriptor, cap) => descriptor.arguments.push(parseInt(cap[0], 10))),
+	
+	bool: r.terminal(/^(true|false)/, (env, descriptor, cap) => descriptor.arguments.push((cap[1] === 'true') ? true : false))
 };
 
 export default rules;

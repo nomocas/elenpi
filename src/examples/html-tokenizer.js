@@ -47,7 +47,7 @@ const rules = {
 	// normal tag (including raw tags)
 	tag: r
 		// start tag
-		.terminal(/^<([\w-_\:]+)\s*/, (env, obj, cap) => { obj.tagName = cap[1]; })
+		.terminal(/^<([\w-_\:]+)\s*/, (env, obj, cap) => obj.tagName = cap[1])
 		// attributes
 		.zeroOrMore(
 			// attrName | attrName="... ..." | attrName=something | attrName={{ .. }} | attrName={ .. }
