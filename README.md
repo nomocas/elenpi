@@ -19,7 +19,7 @@ Allow to describe parser rules with structured sentences based on Method Chainin
 - easy DSL prototyping
 - quite fast
 
-Take a look at examples in [./src/examples](https://github.com/nomocas/elenpi/tree/master/src/examples).
+Take a look at examples in [./examples](https://github.com/nomocas/elenpi/tree/master/examples).
 
 [Esdoc references](https://doc.esdoc.org/github.com/nomocas/elenpi/)
 
@@ -192,7 +192,7 @@ var  r = parser.parse('a string to parse', ruleToApply = null, objectWhereStoreT
 // If parsing succeed, descriptor has been decorated with catched properties
 ```
 
-__see parsers examples__ in [./src/examples](https://github.com/nomocas/elenpi/tree/master/src/examples)
+__see parsers examples__ in [./examples](https://github.com/nomocas/elenpi/tree/master/examples)
 
 ## Licence
 
