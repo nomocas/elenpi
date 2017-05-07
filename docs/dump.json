@@ -2,219 +2,6 @@
   {
     "__docId__": 0,
     "kind": "file",
-    "name": "src/examples/chained-methods-parser.js",
-    "content": "/**\n * For parsing strings like : \n * click ( '12', \"zoo\", 14, true, blur(2, 4.02, hello( false).foo())). bar(12345)\n *\n * see tests for result\n */\n\nimport elenpi from '../index.js';\n\nconst r = elenpi.Rule.initializer,\n\trules = {\n\t\tdoublestring: r.terminal(/^\"([^\"]*)\"/, (env, obj, cap) => obj.value = cap[1]),\n\n\t\tsinglestring: r.terminal(/^'([^']*)'/, (env, obj, cap) => obj.value = cap[1]),\n\n\t\tfloat: r.terminal(/^[0-9]*\\.[0-9]+/, (env, obj, cap) => obj.value = parseFloat(cap[0], 10)),\n\n\t\tinteger: r.terminal(/^[0-9]+/, (env, obj, cap) => obj.value = parseInt(cap[0], 10)),\n\n\t\tbool: r.terminal(/^(true|false)/, (env, obj, cap) => obj.value = (cap[1] === 'true') ? true : false),\n\n\t\t//_____________________________________\n\n\t\tcalls: r\n\t\t\t.space()\n\t\t\t.zeroOrMore({\n\t\t\t\trule: 'call',\n\t\t\t\tpushTo: 'calls',\n\t\t\t\tseparator: r.terminal(/^\\s*\\.\\s*/)\n\t\t\t}),\n\n\t\tcall: r\n\t\t\t.terminal(/^([\\w-_]+)\\s*/, (env, obj, cap) => obj.method = cap[1])\n\t\t\t.terminal(/^\\(\\s*/)\n\t\t\t.zeroOrMore({\n\t\t\t\trule: r.oneOf('integer', 'bool', 'singlestring', 'doublestring', 'calls'),\n\t\t\t\tpushTo: 'arguments',\n\t\t\t\tseparator: r.terminal(/^\\s*,\\s*/)\n\t\t\t})\n\t\t\t.terminal(/^\\s*\\)/)\n\t};\n\nexport default new elenpi.Parser(rules, 'calls');\n",
-    "static": true,
-    "longname": "src/examples/chained-methods-parser.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 1,
-    "kind": "variable",
-    "name": "r",
-    "memberof": "src/examples/chained-methods-parser.js",
-    "static": true,
-    "longname": "src/examples/chained-methods-parser.js~r",
-    "access": null,
-    "export": false,
-    "importPath": "elenpi/src/examples/chained-methods-parser.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 10,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 2,
-    "kind": "file",
-    "name": "src/examples/html-tokenizer.js",
-    "content": "/** \n * @author Gilles Coomans <gilles.coomans@gmail.com>\n * html tokenizer\n */\n\nimport elenpi from '../index.js';\nconst r = elenpi.Rule.initializer,\n\tParser = elenpi.Parser,\n\texec = Parser.exec,\n\tattributeExpr = /^([\\w-_]+)\\s*(?:=\\s*(\"([^\"]*)\"|[\\w-_]+))?\\s*/,\n\topenTags = /^(br|input|img|area|base|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)/,\n\tonlySpace = /^\\s+$/,\n\trawContentTags = /^(?:script|style|code)/;\n\nconst rules = {\n\tdocument: r\n\t\t.zeroOrMore(r.space().one('comment'))\n\t\t.terminal(/^\\s*<!DOCTYPE[^>]*>\\s*/i)\n\t\t.one('children')\n\t\t.space(),\n\n\tcomment: r.terminal(/^<!--([\\s\\S]*)?(?=-->)-->/, (env, obj, cap) => obj.comment = cap[1]),\n\n\t// closing tag\n\ttagEnd: r.terminal(/^\\s*<\\/([\\w-_\\:]+)\\s*>/, (env, obj, cap) => {\n\t\tif (obj.tagName !== cap[1]) {\n\t\t\tenv.errors = env.errors || [];\n\t\t\tenv.errors.push('tag badly closed : ' + cap[1] + ' - (at opening : ' + obj.tagName + ')');\n\t\t}\n\t}),\n\n\t// tag children\n\tchildren: r\n\t\t.zeroOrMore({\n\t\t\tpushTo: 'children',\n\t\t\trule: r.oneOf('comment', 'text', 'tag')\n\t\t}),\n\n\ttext: r.terminal(/^[^<]+/, (env, obj, cap) => {\n\t\tconst val = cap[0];\n\t\tif (onlySpace.test(val)) \n\t\t\tobj.skip = true;\n\t\telse \n\t\t\tobj.textValue = val;\n\t}),\n\n\t// normal tag (including raw tags)\n\ttag: r\n\t\t// start tag\n\t\t.terminal(/^<([\\w-_\\:]+)\\s*/, (env, obj, cap) => obj.tagName = cap[1])\n\t\t// attributes\n\t\t.zeroOrMore(\n\t\t\t// attrName | attrName=\"... ...\" | attrName=something | attrName={{ .. }} | attrName={ .. }\n\t\t\t// with an optional space (\\s*) after equal sign (if any).\n\t\t\tr.terminal(attributeExpr, (env, obj, cap) => {\n\t\t\t\tconst attrName = cap[1],\n\t\t\t\t\tvalue = (cap[3] !== undefined) ? cap[3] : ((cap[2] !== undefined) ? cap[2] : '');\n\t\t\t\tswitch (attrName) {\n\t\t\t\t\tcase 'class':\n\t\t\t\t\t\tif (!value)\n\t\t\t\t\t\t\tbreak;\n\t\t\t\t\t\tobj.classes = value.split(/\\s+/);\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tdefault:\n\t\t\t\t\t\tobj.attributes = obj.attributes || {};\n\t\t\t\t\t\tobj.attributes[attrName] = value;\n\t\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t})\n\t\t)\n\t\t.oneOf(\n\t\t\tr.char('>')\n\t\t\t.done((env, obj) => {\n\t\t\t\t// check html5 unstrict self-closing tags\n\t\t\t\tif (openTags.test(obj.tagName))\n\t\t\t\t\treturn; // no children\n\n\t\t\t\tif (rawContentTags.test(obj.tagName)) // get raw content\n\t\t\t\t\treturn rawContent(obj.tagName, env, obj);\n\n\t\t\t\t// get inner tag content\n\t\t\t\texec(env.parser.rules.children, obj, env);\n\t\t\t\tif (!env.error) // close tag\n\t\t\t\t\texec(env.parser.rules.tagEnd, obj, env);\n\t\t\t}),\n\t\t\t// strict self closed tag\n\t\t\tr.terminal(/^\\/>/),\n\t\t\tr.error('Missing end of tag')\n\t\t)\n};\n\n// raw inner content of tag\nfunction rawContent(tagName, env, tag) {\n\tconst index = env.string.indexOf('</' + tagName + '>');\n\tif (index === -1) {\n\t\tenv.error = true;\n\t\tenv.errorMessage = tagName + ' tag not closed.';\n\t\treturn;\n\t}\n\tif (index) // more than 0\n\t\ttag.rawContent = env.string.substring(0, index);\n\tenv.string = env.string.substring(index + tagName.length + 3);\n}\n\nconst parser = new Parser(rules, 'children');\n\nexport default parser;\n\n",
-    "static": true,
-    "longname": "src/examples/html-tokenizer.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 3,
-    "kind": "variable",
-    "name": "r",
-    "memberof": "src/examples/html-tokenizer.js",
-    "static": true,
-    "longname": "src/examples/html-tokenizer.js~r",
-    "access": null,
-    "export": false,
-    "importPath": "elenpi/src/examples/html-tokenizer.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 7,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 4,
-    "kind": "variable",
-    "name": "rules",
-    "memberof": "src/examples/html-tokenizer.js",
-    "static": true,
-    "longname": "src/examples/html-tokenizer.js~rules",
-    "access": null,
-    "export": false,
-    "importPath": "elenpi/src/examples/html-tokenizer.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 15,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "{\"document\": *, \"comment\": *, \"tagEnd\": *, \"children\": *, \"text\": *, \"tag\": *}"
-      ]
-    }
-  },
-  {
-    "__docId__": 5,
-    "kind": "function",
-    "name": "rawContent",
-    "memberof": "src/examples/html-tokenizer.js",
-    "generator": false,
-    "async": false,
-    "static": true,
-    "longname": "src/examples/html-tokenizer.js~rawContent",
-    "access": null,
-    "export": false,
-    "importPath": "elenpi/src/examples/html-tokenizer.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 93,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "params": [
-      {
-        "name": "tagName",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "env",
-        "types": [
-          "*"
-        ]
-      },
-      {
-        "name": "tag",
-        "types": [
-          "*"
-        ]
-      }
-    ]
-  },
-  {
-    "__docId__": 6,
-    "kind": "file",
-    "name": "src/examples/primitive-argument-rules.js",
-    "content": "/**\n * @author Gilles Coomans <gilles.coomans@gmail.com>\n * elenpi rules for primitives function's arguments. aka : \"double\", 'single', 1.12, 14, true, false\n */\nimport elenpi from '../index.js';\nconst r = elenpi.Rule.initializer;\n\n/**\n * example of rules for parsing arguments somewhere\n * @type {Object}\n * @private\n */\nconst rules = {\n\tdoublestring: r.terminal(/^\"([^\"]*)\"/, (env, descriptor, cap) => descriptor.arguments.push(cap[1])),\n\n\tsinglestring: r.terminal(/^'([^']*)'/, (env, descriptor, cap) => descriptor.arguments.push(cap[1])),\n\t\n\tfloat: r.terminal(/^[0-9]*\\.[0-9]+/, (env, descriptor, cap) => descriptor.arguments.push(parseFloat(cap[0], 10))),\n\t\n\tinteger: r.terminal(/^[0-9]+/, (env, descriptor, cap) => descriptor.arguments.push(parseInt(cap[0], 10))),\n\t\n\tbool: r.terminal(/^(true|false)/, (env, descriptor, cap) => descriptor.arguments.push((cap[1] === 'true') ? true : false))\n};\n\nexport default rules;\n",
-    "static": true,
-    "longname": "src/examples/primitive-argument-rules.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 7,
-    "kind": "variable",
-    "name": "r",
-    "memberof": "src/examples/primitive-argument-rules.js",
-    "static": true,
-    "longname": "src/examples/primitive-argument-rules.js~r",
-    "access": null,
-    "export": false,
-    "importPath": "elenpi/src/examples/primitive-argument-rules.js",
-    "importStyle": null,
-    "description": null,
-    "lineNumber": 6,
-    "undocument": true,
-    "unknown": [
-      {
-        "tagName": "@_undocument",
-        "tagValue": ""
-      }
-    ],
-    "type": {
-      "types": [
-        "*"
-      ]
-    }
-  },
-  {
-    "__docId__": 8,
-    "kind": "variable",
-    "name": "rules",
-    "memberof": "src/examples/primitive-argument-rules.js",
-    "static": true,
-    "longname": "src/examples/primitive-argument-rules.js~rules",
-    "access": "private",
-    "export": true,
-    "importPath": "elenpi/src/examples/primitive-argument-rules.js",
-    "importStyle": "rules",
-    "description": "example of rules for parsing arguments somewhere",
-    "lineNumber": 13,
-    "type": {
-      "nullable": null,
-      "types": [
-        "Object"
-      ],
-      "spread": false,
-      "description": null
-    }
-  },
-  {
-    "__docId__": 9,
-    "kind": "file",
-    "name": "src/examples/primitives-regex.js",
-    "content": "export default {\n\tdoublestring: /^\"([^\"]*)\"/,\n\tsinglestringArg: /^'([^']*)'/,\n\tfloatArg: /^[0-9]*\\.[0-9]+/,\n\tintegerArg: /^[0-9]+/,\n\tboolArg: /^(true|false)/,\n\tid: /^[\\w-_]+/,\n\tobjectKey: /^([\\w-_]+)|\"([^\"]*)\"|'([^']*)'/\n};\n",
-    "static": true,
-    "longname": "src/examples/primitives-regex.js",
-    "access": null,
-    "description": null,
-    "lineNumber": 1
-  },
-  {
-    "__docId__": 10,
-    "kind": "file",
     "name": "src/index.js",
     "content": "/**\n * elenpi\n * @author Gilles Coomans\n */\n\nimport Parser from './parser.js';\nimport Rule from './rule.js';\n\n/**\n * elenpi export object { Rule, Parser }\n * @type {Object}\n * @public\n */\nconst elenpi = {\n\tRule,\n\tParser\n};\n\nexport default elenpi;\n",
     "static": true,
@@ -224,7 +11,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 11,
+    "__docId__": 1,
     "kind": "variable",
     "name": "elenpi",
     "memberof": "src/index.js",
@@ -246,7 +33,7 @@
     }
   },
   {
-    "__docId__": 12,
+    "__docId__": 2,
     "kind": "file",
     "name": "src/parser.js",
     "content": "/*\n* @Author: Gilles Coomans\n* @Last Modified by:   Gilles Coomans\n* @Last Modified time: 2017-05-07 23:42:17\n*/\n\n/**\n * The Parser class.\n * @public\n */\nclass Parser {\n\n\t/**\n\t * @param  {Object} rules       an object containing rules\n\t * @param  {String} defaultRule the default rule to use when parsing\n\t */\n\tconstructor(rules, defaultRule) {\n\n\t\t/**\n\t\t * the rules map\n\t\t * @type {Object}\n\t\t */\n\t\tthis.rules = rules;\n\n\t\t/**\n\t\t * the default rule's name to use\n\t\t * @type {String}\n\t\t */\n\t\tthis.defaultRule = defaultRule;\n\t}\n\n\t/**\n\t * find rule by name\n\t * @param  {String} name the rule's name\n\t * @return {Rule}      the finded rule\n\t * @throws {Error} If rule not found\n\t */\n\tgetRule(name) {\n\t\tconst r = this.rules[name];\n\t\tif (!r)\n\t\t\tthrow new Error('elenpi parser : rules not found : ' + name);\n\t\treturn r;\n\t}\n\n\t/**\n\t * Parse provided string with specific rule\n\t * @param  {String} string     the string to parse\n\t * @param  {?String} rule       the name of the rule to apply. default is null (will use parser's default method if not provided).\n\t * @param  {?Object} descriptor the main descriptor object\n\t * @param  {?Object} env \t\tthe env object (internal object used while parsing)\n\t * @return {Object}            the decorated descriptor\n\t * @throws {Error} If parsing fail (for any reason)\n\t */\n\tparse(string, rule = null, descriptor = {}, env = null) {\n\t\tenv = env || {};\n\t\tenv.parser = this;\n\t\tenv.string = string;\n\t\trule = rule || this.getRule(this.defaultRule);\n\t\tParser.exec(rule, descriptor, env);\n\t\tif (!env.error && env.string.length) {\n\t\t\tenv.error = true;\n\t\t\tenv.errorMessage = 'string wasn\\'t parsed entierly';\n\t\t}\n\t\tif (env.error) {\n\t\t\tconst pos = string.length - env.string.length,\n\t\t\t\tposInFile = getPositionInFile(string, pos);\n\t\t\tthrow new Error('Parsing failed : ' + (env.errorMessage || 'no rules matched') + ' : (line:' + posInFile.line + ' , col:' + posInFile.col + ') near :\\n', string.substring(pos, pos + 50));\n\t\t}\n\t\treturn descriptor;\n\t}\n\n\t/**\n\t * Execute a rule (only for those who developing grammars)\n\t * @param  {String|Rule} rule      the name of the rule to use or the rule itself\n\t * @param  {Object} descriptor the descriptor to decorate\n\t * @param  {Object} env        the inner-job main object where parser, parsed string and eventual errors are stored\n\t * @return {Void}            nothing\n\t * @public\n\t * @throws {Error} If rule is string (so it's a rule's name) and referenced rule could not be found with it.\n\t */\n\tstatic exec(rule, descriptor, env) {\n\t\tif (env.error)\n\t\t\treturn;\n\t\tif (typeof rule === 'string')\n\t\t\trule = env.parser.getRule(rule);\n\n\t\tconst rules = rule._queue;\n\t\tfor (let i = 0, current, len = rules.length; i < len; ++i) {\n\t\t\tcurrent = rules[i];\n\t\t\tif (current.__elenpi__)\n\t\t\t\tParser.exec(current, descriptor, env);\n\t\t\telse // is function\n\t\t\t\tcurrent(env, descriptor);\n\t\t\tif (env.error)\n\t\t\t\tbreak;\n\t\t}\n\t}\n}\n\nfunction getPositionInFile(string, position) {\n\tconst splitted = string.split(/\\r|\\n/),\n\t\tlen = splitted.length;\n\tlet lineNumber = 0,\n\t\tcurrent = 0,\n\t\tline,\n\t\tlineLength;\n\twhile (lineNumber < len) {\n\t\tline = splitted[lineNumber];\n\t\tlineLength = line.length;\n\t\tif (position <= (current + lineLength))\n\t\t\tbreak;\n\t\tcurrent += lineLength;\n\t\tlineNumber++;\n\t}\n\treturn {\n\t\tline: lineNumber + 1,\n\t\tcol: position - current\n\t};\n}\n\nexport default Parser;\n\n",
@@ -257,7 +44,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 13,
+    "__docId__": 3,
     "kind": "function",
     "name": "getPositionInFile",
     "memberof": "src/parser.js",
@@ -299,7 +86,7 @@
     }
   },
   {
-    "__docId__": 14,
+    "__docId__": 4,
     "kind": "class",
     "name": "Parser",
     "memberof": "src/parser.js",
@@ -314,7 +101,7 @@
     "interface": false
   },
   {
-    "__docId__": 15,
+    "__docId__": 5,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/parser.js~Parser",
@@ -349,7 +136,7 @@
     ]
   },
   {
-    "__docId__": 16,
+    "__docId__": 6,
     "kind": "member",
     "name": "rules",
     "memberof": "src/parser.js~Parser",
@@ -368,7 +155,7 @@
     }
   },
   {
-    "__docId__": 17,
+    "__docId__": 7,
     "kind": "member",
     "name": "defaultRule",
     "memberof": "src/parser.js~Parser",
@@ -387,7 +174,7 @@
     }
   },
   {
-    "__docId__": 18,
+    "__docId__": 8,
     "kind": "method",
     "name": "getRule",
     "memberof": "src/parser.js~Parser",
@@ -428,7 +215,7 @@
     ]
   },
   {
-    "__docId__": 19,
+    "__docId__": 9,
     "kind": "method",
     "name": "parse",
     "memberof": "src/parser.js~Parser",
@@ -499,7 +286,7 @@
     ]
   },
   {
-    "__docId__": 20,
+    "__docId__": 10,
     "kind": "method",
     "name": "exec",
     "memberof": "src/parser.js~Parser",
@@ -561,7 +348,7 @@
     ]
   },
   {
-    "__docId__": 21,
+    "__docId__": 11,
     "kind": "file",
     "name": "src/rule.js",
     "content": "/*\n * @Author: Gilles Coomans\n */\n\nimport Parser from './parser.js';\n\nconst defaultSpaceRegExp = /^\\s+/,\n\texec = Parser.exec;\n\n/**\n * The Rule base class.\n * @public\n */\nclass Rule {\n\n\t/**\n\t * the Rule constructor\n\t */\n\tconstructor() {\n\t\tthis._queue = [];\n\t\tthis.__elenpi__ = true;\n\t}\n\n\t/**\n\t * the base handler for every other lexems\n\t * @param  {Function} callback the callback to handle string\n\t * @return {Rule}          this rule handler\n\t */\n\tdone(callback) {\n\t\tthis._queue.push(callback);\n\t\treturn this;\n\t}\n\n\t/**\n\t * use another rule  \n\t * @param  {String|Rule|function} rule the rule to use\n\t * @return {Rule}          this rule handler\n\t */\n\tuse(rule) {\n\t\t// const args = [].slice.call(arguments, 1);\n\t\treturn this.done((env, descriptor) => {\n\t\t\tif (typeof rule === 'string')\n\t\t\t\trule = env.parser.getRule(rule);\n\t\t\tif (rule.__elenpi__) {\n\t\t\t\texec(rule, descriptor, env);\n\t\t\t}\n\t\t\t/* else if(typeof rule === 'function') {\n\t\t\t\tconst r = new Rule();\n\t\t\t\trule.apply(r, args);\n\t\t\t\texec(r, descriptor, env);\n\t\t\t}*/\n\t\t});\n\t}\n\n\t/**\n\t * catch a terminal\n\t * @param  {RegExp} reg the terminal's regexp\n\t * @param  {String|Function} set either the name of the property (in current descriptor) where store the catched value \n\t *                           or a function to handle captured object by hand \n\t * @return {Rule}          this rule handler\n\t */\n\tterminal(reg, set) {\n\t\treturn this.done((env, descriptor) => {\n\t\t\tif (!env.string.length) {\n\t\t\t\tenv.error = true;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst cap = reg.exec(env.string);\n\t\t\tif (cap) {\n\t\t\t\tenv.string = env.string.substring(cap[0].length);\n\t\t\t\tif (set) {\n\t\t\t\t\tif (typeof set === 'string')\n\t\t\t\t\t\tdescriptor[set] = cap[0];\n\t\t\t\t\telse\n\t\t\t\t\t\tset(env, descriptor, cap);\n\t\t\t\t}\n\t\t\t} else\n\t\t\t\tenv.error = true;\n\t\t});\n\t}\n\n\t/**\n\t * match a single character\n\t * @param  {String} test the caracter to match\n\t * @return {Rule}          this rule handler\n\t */\n\tchar(test) {\n\t\treturn this.done((env) => {\n\t\t\tif (!env.string.length || env.string[0] !== test)\n\t\t\t\tenv.error = true;\n\t\t\telse\n\t\t\t\tenv.string = env.string.substring(1);\n\t\t});\n\t}\n\n\t/**\n\t * match x or more element from string with provided rule\n\t * @param  {Rule|Object} rule either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\txOrMore(rule) {\n\t\tconst opt = (typeof rule === 'string' || rule.__elenpi__) ? {\n\t\t\trule\n\t\t} : rule;\n\t\topt.minimum = opt.minimum || 0;\n\t\topt.maximum = opt.maximum || Infinity;\n\t\treturn this.done((env, descriptor) => {\n\n\t\t\tif (opt.minimum && !env.string.length) {\n\t\t\t\tenv.error = true;\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tconst rule = opt.rule,\n\t\t\t\tpushTo = opt.pushTo,\n\t\t\t\tpushToString = typeof pushTo === 'string',\n\t\t\t\tAs = opt.as,\n\t\t\t\tseparator = opt.separator;\n\n\t\t\tlet count = 0,\n\t\t\t\tcurrentPosition,\n\t\t\t\tnewDescriptor,\n\t\t\t\trestLength;\n\n\t\t\twhile (env.string.length && count < opt.maximum) {\n\t\t\t\t\n\t\t\t\tnewDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);\n\t\t\t\tcurrentPosition = env.string.length;\n\n\t\t\t\texec(rule, newDescriptor, env);\n\n\t\t\t\trestLength = env.string.length;\n\n\t\t\t\tif (env.error) {\n\t\t\t\t\tif (currentPosition === restLength) // has not moved deeper : so try next rule\n\t\t\t\t\t\tenv.error = false;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tcount++;\n\n\t\t\t\t// store new descriptor in parent descriptor\n\t\t\t\tif (!newDescriptor.skip && pushTo)\n\t\t\t\t\tif (pushToString) {\n\t\t\t\t\t\tdescriptor[pushTo] = descriptor[pushTo] || [];\n\t\t\t\t\t\tdescriptor[pushTo].push(newDescriptor);\n\t\t\t\t\t} else\n\t\t\t\t\t\tpushTo(env, descriptor, newDescriptor);\n\n\t\t\t\t// manage separator\n\t\t\t\tif (separator && restLength) {\n\t\t\t\t\tcurrentPosition = restLength;\n\t\t\t\t\texec(separator, newDescriptor, env);\n\t\t\t\t\tif (env.error) {\n\t\t\t\t\t\tif (currentPosition === env.string.length)\n\t\t\t\t\t\t\tenv.error = false;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (!env.error && count < opt.minimum) {\n\t\t\t\tenv.error = true;\n\t\t\t\tenv.errorMessage = \"missing xOrMore item : \" + rule;\n\t\t\t}\n\t\t});\n\t}\n\n\t/**\n\t * match 0 or more element from string with provided rule\n\t * @param  {Rule|Object} rule either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\tzeroOrMore(rule) {\n\t\treturn this.xOrMore(rule);\n\t}\n\n\t/**\n\t * match 1 or more element from string with provided rule\n\t * @param  {Rule|Object} rule either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\toneOrMore(rule) {\n\t\tif (typeof rule === 'string' || rule.__elenpi__)\n\t\t\trule = {\n\t\t\t\trule,\n\t\t\t\tminimum: 1\n\t\t\t};\n\t\telse\n\t\t\trule.minimum = 1;\n\t\treturn this.xOrMore(rule);\n\t}\n\n\t/**\n\t * match one element from string with one of provided rules\n\t * @param  {Rule|Object} rules either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\toneOf(rules) {\n\t\tconst opt = (typeof rules === 'string' || rules.__elenpi__) ? {\n\t\t\trules: [].slice.call(arguments)\n\t\t} : rules;\n\t\treturn this.done((env, descriptor) => {\n\n\t\t\tif (!opt.optional && !env.string.length) {\n\t\t\t\tenv.error = true;\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tconst len = opt.rules.length,\n\t\t\t\tcurrentPosition = env.string.length;\n\n\t\t\tlet count = 0,\n\t\t\t\trule,\n\t\t\t\tnewDescriptor;\n\n\t\t\twhile (count < len) {\n\t\t\t\trule = opt.rules[count++];\n\t\t\t\tnewDescriptor = opt.as ? opt.as(env, descriptor) : (opt.set ? {} : descriptor);\n\t\t\t\texec(rule, newDescriptor, env);\n\t\t\t\tif (env.error) {\n\t\t\t\t\tif (env.string.length === currentPosition) {\n\t\t\t\t\t\tenv.error = false;\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}\n\t\t\t\t} else\n\t\t\t\t\tsetDescriptor(descriptor, newDescriptor, opt.set, env);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tif (!opt.optional)\n\t\t\t\tenv.error = true;\n\t\t});\n\t}\n\n\t/**\n\t * maybe match one element from string with one of provided rules\n\t * @param  {Rule|Object} rules either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\tmaybeOneOf(rules) {\n\t\tconst opt = (typeof rules === 'string' || rules.__elenpi__) ? {\n\t\t\trules: [].slice.call(arguments)\n\t\t} : rules;\n\t\topt.optional = true;\n\t\treturn this.oneOf(opt);\n\t}\n\n\t/**\n\t * match one element from string with provided rule\n\t * @param  {Rule|Object} rule either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\tone(rule) {\n\t\tconst opt = (typeof rule === 'string' || (rule && rule.__elenpi__)) ? {\n\t\t\trule\n\t\t} : rule;\n\t\treturn this.done((env, descriptor) => {\n\t\t\tif (!opt.optional && !env.string.length) {\n\t\t\t\tenv.error = true;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst newDescriptor = opt.as ? opt.as(env, descriptor) : (opt.set ? {} : descriptor),\n\t\t\t\tcurrentPosition = env.string.length;\n\n\t\t\texec(opt.rule, newDescriptor, env);\n\t\t\tif (!env.error)\n\t\t\t\tsetDescriptor(descriptor, newDescriptor, opt.set, env);\n\t\t\telse if (opt.optional && env.string.length === currentPosition)\n\t\t\t\tenv.error = false;\n\t\t});\n\t}\n\n\t/**\n\t * maybe match one element from string with provided rule\n\t * @param  {Rule|Object} rule either a rule instance or an option object\n\t * @return {Rule}          this rule handler\n\t */\n\tmaybeOne(rule) {\n\t\tconst opt = (typeof rule === 'string' || (rule && rule.__elenpi__)) ? {\n\t\t\trule\n\t\t} : rule;\n\t\topt.optional = true;\n\t\treturn this.one(opt);\n\t}\n\n\t/**\n\t * skip current descriptor\n\t * @return {Rule}          this rule handler\n\t */\n\tskip() {\n\t\treturn this.done((env, descriptor) => {\n\t\t\tdescriptor.skip = true;\n\t\t});\n\t}\n\n\t/**\n\t * match a space (any spaces, or carriage returns, or new lines)\n\t * @param  {Boolean} needed true if space is needed. false otherwise.\n\t * @return {Rule}          this rule handler\n\t */\n\tspace(needed = false) {\n\t\treturn this.done((env) => {\n\t\t\tif (!env.string.length) {\n\t\t\t\tif (needed)\n\t\t\t\t\tenv.error = true;\n\t\t\t\treturn;\n\t\t\t}\n\t\t\tconst cap = (env.parser.rules.space || defaultSpaceRegExp).exec(env.string);\n\t\t\tif (cap)\n\t\t\t\tenv.string = env.string.substring(cap[0].length);\n\t\t\telse if (needed)\n\t\t\t\tenv.error = true;\n\t\t});\n\t}\n\n\t/**\n\t * match the end of string\n\t * @return {Rule}          this rule handler\n\t */\n\tend() {\n\t\treturn this.done((env) => {\n\t\t\tif (env.string.length)\n\t\t\t\tenv.error = true;\n\t\t});\n\t}\n\n\t/**\n\t * force end parsing with error. Only aimed to be used in .oneOf().\n\t * @param  {String} msg the error message.\n\t * @return {Rule}          this rule handler\n\t */\n\terror(msg) {\n\t\treturn this.done((env) => {\n\t\t\tenv.error = true;\n\t\t\tenv.errorMessage = msg;\n\t\t});\n\t}\n}\n\nfunction setDescriptor(descriptor, newDescriptor, set, env) {\n\tif (!newDescriptor.skip && set)\n\t\tif (typeof set === 'string')\n\t\t\tdescriptor[set] = newDescriptor;\n\t\telse\n\t\t\tset(env, descriptor, newDescriptor);\n}\n\nconst r = {};\n\nObject.getOwnPropertyNames(Rule.prototype) // because Babel make prototype methods not enumerable\n\t.forEach((key) => {\n\t\tif (typeof Rule.prototype[key] === 'function')\n\t\t\tr[key] = function() {\n\t\t\t\tconst rule = new Rule();\n\t\t\t\treturn rule[key].apply(rule, arguments);\n\t\t\t};\n\t});\n\n/**\n * Rule initializer object (all the Rul's API for starting rule's sentences)\n * @type {Object}\n * @public\n * @static\n */\nRule.initializer = r;\n\nexport default Rule;\n\n",
@@ -572,7 +359,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 22,
+    "__docId__": 12,
     "kind": "variable",
     "name": "defaultSpaceRegExp",
     "memberof": "src/rule.js",
@@ -598,7 +385,7 @@
     }
   },
   {
-    "__docId__": 23,
+    "__docId__": 13,
     "kind": "function",
     "name": "setDescriptor",
     "memberof": "src/rule.js",
@@ -647,7 +434,7 @@
     ]
   },
   {
-    "__docId__": 24,
+    "__docId__": 14,
     "kind": "variable",
     "name": "r",
     "memberof": "src/rule.js",
@@ -673,7 +460,7 @@
     }
   },
   {
-    "__docId__": 25,
+    "__docId__": 15,
     "kind": "class",
     "name": "Rule",
     "memberof": "src/rule.js",
@@ -688,7 +475,7 @@
     "interface": false
   },
   {
-    "__docId__": 26,
+    "__docId__": 16,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "src/rule.js~Rule",
@@ -702,7 +489,7 @@
     "params": []
   },
   {
-    "__docId__": 27,
+    "__docId__": 17,
     "kind": "member",
     "name": "_queue",
     "memberof": "src/rule.js~Rule",
@@ -725,7 +512,7 @@
     }
   },
   {
-    "__docId__": 28,
+    "__docId__": 18,
     "kind": "member",
     "name": "__elenpi__",
     "memberof": "src/rule.js~Rule",
@@ -748,7 +535,7 @@
     }
   },
   {
-    "__docId__": 29,
+    "__docId__": 19,
     "kind": "method",
     "name": "done",
     "memberof": "src/rule.js~Rule",
@@ -781,7 +568,7 @@
     }
   },
   {
-    "__docId__": 30,
+    "__docId__": 20,
     "kind": "method",
     "name": "use",
     "memberof": "src/rule.js~Rule",
@@ -816,7 +603,7 @@
     }
   },
   {
-    "__docId__": 31,
+    "__docId__": 21,
     "kind": "method",
     "name": "terminal",
     "memberof": "src/rule.js~Rule",
@@ -860,7 +647,7 @@
     }
   },
   {
-    "__docId__": 32,
+    "__docId__": 22,
     "kind": "method",
     "name": "char",
     "memberof": "src/rule.js~Rule",
@@ -893,7 +680,7 @@
     }
   },
   {
-    "__docId__": 33,
+    "__docId__": 23,
     "kind": "method",
     "name": "xOrMore",
     "memberof": "src/rule.js~Rule",
@@ -927,7 +714,7 @@
     }
   },
   {
-    "__docId__": 34,
+    "__docId__": 24,
     "kind": "method",
     "name": "zeroOrMore",
     "memberof": "src/rule.js~Rule",
@@ -961,7 +748,7 @@
     }
   },
   {
-    "__docId__": 35,
+    "__docId__": 25,
     "kind": "method",
     "name": "oneOrMore",
     "memberof": "src/rule.js~Rule",
@@ -995,7 +782,7 @@
     }
   },
   {
-    "__docId__": 36,
+    "__docId__": 26,
     "kind": "method",
     "name": "oneOf",
     "memberof": "src/rule.js~Rule",
@@ -1029,7 +816,7 @@
     }
   },
   {
-    "__docId__": 37,
+    "__docId__": 27,
     "kind": "method",
     "name": "maybeOneOf",
     "memberof": "src/rule.js~Rule",
@@ -1063,7 +850,7 @@
     }
   },
   {
-    "__docId__": 38,
+    "__docId__": 28,
     "kind": "method",
     "name": "one",
     "memberof": "src/rule.js~Rule",
@@ -1097,7 +884,7 @@
     }
   },
   {
-    "__docId__": 39,
+    "__docId__": 29,
     "kind": "method",
     "name": "maybeOne",
     "memberof": "src/rule.js~Rule",
@@ -1131,7 +918,7 @@
     }
   },
   {
-    "__docId__": 40,
+    "__docId__": 30,
     "kind": "method",
     "name": "skip",
     "memberof": "src/rule.js~Rule",
@@ -1153,7 +940,7 @@
     }
   },
   {
-    "__docId__": 41,
+    "__docId__": 31,
     "kind": "method",
     "name": "space",
     "memberof": "src/rule.js~Rule",
@@ -1186,7 +973,7 @@
     }
   },
   {
-    "__docId__": 42,
+    "__docId__": 32,
     "kind": "method",
     "name": "end",
     "memberof": "src/rule.js~Rule",
@@ -1208,7 +995,7 @@
     }
   },
   {
-    "__docId__": 43,
+    "__docId__": 33,
     "kind": "method",
     "name": "error",
     "memberof": "src/rule.js~Rule",
@@ -1241,7 +1028,7 @@
     }
   },
   {
-    "__docId__": 45,
+    "__docId__": 35,
     "kind": "external",
     "name": "Infinity",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
@@ -1253,7 +1040,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 46,
+    "__docId__": 36,
     "kind": "external",
     "name": "NaN",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
@@ -1265,7 +1052,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 47,
+    "__docId__": 37,
     "kind": "external",
     "name": "undefined",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
@@ -1277,7 +1064,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 48,
+    "__docId__": 38,
     "kind": "external",
     "name": "null",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
@@ -1289,7 +1076,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 49,
+    "__docId__": 39,
     "kind": "external",
     "name": "Object",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
@@ -1301,7 +1088,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 50,
+    "__docId__": 40,
     "kind": "external",
     "name": "object",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
@@ -1313,7 +1100,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 51,
+    "__docId__": 41,
     "kind": "external",
     "name": "Function",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
@@ -1325,7 +1112,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 52,
+    "__docId__": 42,
     "kind": "external",
     "name": "function",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
@@ -1337,7 +1124,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 53,
+    "__docId__": 43,
     "kind": "external",
     "name": "Boolean",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
@@ -1349,7 +1136,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 54,
+    "__docId__": 44,
     "kind": "external",
     "name": "boolean",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
@@ -1361,7 +1148,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 55,
+    "__docId__": 45,
     "kind": "external",
     "name": "Symbol",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
@@ -1373,7 +1160,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 56,
+    "__docId__": 46,
     "kind": "external",
     "name": "Error",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
@@ -1385,7 +1172,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 57,
+    "__docId__": 47,
     "kind": "external",
     "name": "EvalError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
@@ -1397,7 +1184,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 58,
+    "__docId__": 48,
     "kind": "external",
     "name": "InternalError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
@@ -1409,7 +1196,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 59,
+    "__docId__": 49,
     "kind": "external",
     "name": "RangeError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
@@ -1421,7 +1208,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 60,
+    "__docId__": 50,
     "kind": "external",
     "name": "ReferenceError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
@@ -1433,7 +1220,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 61,
+    "__docId__": 51,
     "kind": "external",
     "name": "SyntaxError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
@@ -1445,7 +1232,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 62,
+    "__docId__": 52,
     "kind": "external",
     "name": "TypeError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
@@ -1457,7 +1244,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 63,
+    "__docId__": 53,
     "kind": "external",
     "name": "URIError",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
@@ -1469,7 +1256,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 64,
+    "__docId__": 54,
     "kind": "external",
     "name": "Number",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
@@ -1481,7 +1268,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 65,
+    "__docId__": 55,
     "kind": "external",
     "name": "number",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
@@ -1493,7 +1280,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 66,
+    "__docId__": 56,
     "kind": "external",
     "name": "Date",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
@@ -1505,7 +1292,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 67,
+    "__docId__": 57,
     "kind": "external",
     "name": "String",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
@@ -1517,7 +1304,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 68,
+    "__docId__": 58,
     "kind": "external",
     "name": "string",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
@@ -1529,7 +1316,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 69,
+    "__docId__": 59,
     "kind": "external",
     "name": "RegExp",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
@@ -1541,7 +1328,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 70,
+    "__docId__": 60,
     "kind": "external",
     "name": "Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
@@ -1553,7 +1340,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 71,
+    "__docId__": 61,
     "kind": "external",
     "name": "Int8Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
@@ -1565,7 +1352,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 72,
+    "__docId__": 62,
     "kind": "external",
     "name": "Uint8Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
@@ -1577,7 +1364,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 73,
+    "__docId__": 63,
     "kind": "external",
     "name": "Uint8ClampedArray",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
@@ -1589,7 +1376,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 74,
+    "__docId__": 64,
     "kind": "external",
     "name": "Int16Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
@@ -1601,7 +1388,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 75,
+    "__docId__": 65,
     "kind": "external",
     "name": "Uint16Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
@@ -1613,7 +1400,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 76,
+    "__docId__": 66,
     "kind": "external",
     "name": "Int32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
@@ -1625,7 +1412,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 77,
+    "__docId__": 67,
     "kind": "external",
     "name": "Uint32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
@@ -1637,7 +1424,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 78,
+    "__docId__": 68,
     "kind": "external",
     "name": "Float32Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
@@ -1649,7 +1436,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 79,
+    "__docId__": 69,
     "kind": "external",
     "name": "Float64Array",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
@@ -1661,7 +1448,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 80,
+    "__docId__": 70,
     "kind": "external",
     "name": "Map",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
@@ -1673,7 +1460,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 81,
+    "__docId__": 71,
     "kind": "external",
     "name": "Set",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
@@ -1685,7 +1472,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 82,
+    "__docId__": 72,
     "kind": "external",
     "name": "WeakMap",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
@@ -1697,7 +1484,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 83,
+    "__docId__": 73,
     "kind": "external",
     "name": "WeakSet",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
@@ -1709,7 +1496,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 84,
+    "__docId__": 74,
     "kind": "external",
     "name": "ArrayBuffer",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
@@ -1721,7 +1508,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 85,
+    "__docId__": 75,
     "kind": "external",
     "name": "DataView",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
@@ -1733,7 +1520,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 86,
+    "__docId__": 76,
     "kind": "external",
     "name": "JSON",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
@@ -1745,7 +1532,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 87,
+    "__docId__": 77,
     "kind": "external",
     "name": "Promise",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
@@ -1757,7 +1544,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 88,
+    "__docId__": 78,
     "kind": "external",
     "name": "Generator",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
@@ -1769,7 +1556,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 89,
+    "__docId__": 79,
     "kind": "external",
     "name": "GeneratorFunction",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
@@ -1781,7 +1568,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 90,
+    "__docId__": 80,
     "kind": "external",
     "name": "Reflect",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
@@ -1793,7 +1580,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 91,
+    "__docId__": 81,
     "kind": "external",
     "name": "Proxy",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
@@ -1806,7 +1593,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 93,
+    "__docId__": 83,
     "kind": "external",
     "name": "CanvasRenderingContext2D",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
@@ -1818,7 +1605,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 94,
+    "__docId__": 84,
     "kind": "external",
     "name": "DocumentFragment",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
@@ -1830,7 +1617,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 95,
+    "__docId__": 85,
     "kind": "external",
     "name": "Element",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
@@ -1842,7 +1629,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 96,
+    "__docId__": 86,
     "kind": "external",
     "name": "Event",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
@@ -1854,7 +1641,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 97,
+    "__docId__": 87,
     "kind": "external",
     "name": "Node",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
@@ -1866,7 +1653,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 98,
+    "__docId__": 88,
     "kind": "external",
     "name": "NodeList",
     "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
@@ -1878,7 +1665,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 99,
+    "__docId__": 89,
     "kind": "external",
     "name": "XMLHttpRequest",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
@@ -1890,7 +1677,7 @@
     "builtinExternal": true
   },
   {
-    "__docId__": 100,
+    "__docId__": 90,
     "kind": "external",
     "name": "AudioContext",
     "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",

@@ -348,30 +348,6 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
-    "src/examples/chained-methods-parser.js",
-    "file/src/examples/chained-methods-parser.js.html",
-    "src/examples/chained-methods-parser.js",
-    "file"
-  ],
-  [
-    "src/examples/html-tokenizer.js",
-    "file/src/examples/html-tokenizer.js.html",
-    "src/examples/html-tokenizer.js",
-    "file"
-  ],
-  [
-    "src/examples/primitive-argument-rules.js",
-    "file/src/examples/primitive-argument-rules.js.html",
-    "src/examples/primitive-argument-rules.js",
-    "file"
-  ],
-  [
-    "src/examples/primitives-regex.js",
-    "file/src/examples/primitives-regex.js.html",
-    "src/examples/primitives-regex.js",
-    "file"
-  ],
-  [
     "src/index.js",
     "file/src/index.js.html",
     "src/index.js",

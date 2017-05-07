@@ -68,8 +68,8 @@
 <pre><code class="lang-javascript"><code class="source-code prettyprint">var  r = Rule.initializer;
 var rule = r.oneOf(...);</code>
 </code></pre>
-<p>Behaviour : </p>
-<p>The fundamental atom of elenpi : a simple handler that take an object (env) containing the <strong>rest of the string</strong> to parse and the errors report, and the current object descriptor where to store catched information.</p>
+<p><strong>The Atom</strong> : </p>
+<p>The fundamental atom of elenpi : a simple handler that take an object (<code>env</code>) containing the <strong>rest of the string</strong> to parse and the errors report, and the current <code>descriptor</code> where to store catched information.</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.done(function(env, descriptor){
     // place information in current descriptor
     descriptor.foo = env.string...;
@@ -77,35 +77,35 @@ var rule = r.oneOf(...);</code>
     env.string = env.string.substring(...);
 }) : Rule</code>
 </code></pre>
-<p>Recognize a terminal (aka try to match a regexp at beginning of current string).</p>
+<p><strong>Recognize a terminal</strong> (aka try to match a regexp at beginning of current string) :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.terminal(RegExp, ?String || ?function(env, descriptor, captured){
+    descriptor.something = captured[1]; // example
+}) : Rule</code>
+</code></pre>
 <p>Second argument : </p>
 <ul>
 <li>could be the name of the property in descriptor where elenpi will store first value of the regexp matching output (&quot;captured&quot; below, which is an array with captured parts)</li>
-<li>could be a function that receive the &quot;env&quot; object, the current descriptor, and the &quot;captured&quot; regexp output. You&apos;re free to do what you want. <strong>You should not manage the rest of the string</strong> (it will be done by elenpi).<pre><code class="lang-javascript"><code class="source-code prettyprint">.terminal(RegExp, ?String || ?function(env, descriptor, captured){
-  descriptor.something = captured[1]; // example
-}) : Rule</code>
-</code></pre>
-</li>
+<li>could be a function that receive the &quot;env&quot; object, the current descriptor, and the &quot;captured&quot; regexp output. You&apos;re free to do what you want. <strong>You should not manage the rest of the string</strong> (it will be done by elenpi).</li>
 </ul>
-<p>Recognize a single char, that will <strong>not</strong> be stored in descriptor.</p>
+<p><strong>Recognize a single char</strong>, that will <strong>not</strong> be stored in descriptor :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.char( String ) : Rule</code>
 </code></pre>
-<p>Impose the end of string there.</p>
+<p><strong>Need the end of string</strong> there :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.end() : Rule</code>
 </code></pre>
-<p>Use a rule, either by name (will be found in parser&apos;s rules), or by providing a rule instance (that will be &quot;inserted&quot; there).</p>
+<p><strong>Use a rule</strong>, either by name (will be found in parser&apos;s rules), or by providing a rule instance (that will be &quot;inserted&quot; there) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.use(ruleName:String||rule:Rule) : Rule</code>
 </code></pre>
-<p>Place a <code>skip:true</code> in current descriptor and so elenpi will ignored it.</p>
+<p><strong>Skip</strong> an element : Place a <code>skip:true</code> in current descriptor and so <strong>elenpi will ignored it</strong> :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.skip() : Rule</code>
 </code></pre>
-<p>Recognized an optional space (/^\s+/ : <strong>one or more</strong>).</p>
+<p><strong>Recognized an optional space</strong> (/^\s+/ : <strong>one or more</strong>) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.space(needed = false) : Rule</code>
 </code></pre>
-<p>Force error if parser execute it (useful in some cases when placed after end of rule)</p>
+<p><strong>Force error</strong> if parser execute it (useful in some cases when placed after end of rule) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.error(msg): Rule</code>
 </code></pre>
-<p>Match elements in strings through one rule (maybe optional) :</p>
+<p><strong>Match elements</strong> in strings <strong>through one rule</strong> (maybe optional) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.one(rule || { 
     rule:rule, 
     ?as:function(){ return Instance }, 
@@ -127,7 +127,7 @@ var rule = r.oneOf(...);</code>
 </ul>
 </li>
 </ul>
-<p>Match elements in strings through one of provided rules :</p>
+<p><strong>Match elements</strong> in strings <strong>through one of</strong> provided rules :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.oneOf(...rules || { 
     rules:[rules], 
     ?as:function(){ return Instance }, 
@@ -140,7 +140,7 @@ var rule = r.oneOf(...);</code>
     ?set:&apos;name&apos; || function(env, parent, descriptor){ ... } 
 })</code>
 </code></pre>
-<p>Match x or more element in string with provided rule (and maybe a separator rule) :</p>
+<p><strong>Match x or more elements</strong> in string with provided rule (and maybe a separator rule) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.xOrMore({ 
     rule:rule,
     minimum:int = 0,
@@ -162,7 +162,7 @@ var rule = r.oneOf(...);</code>
 <li>separator: optional, a rule that express the possible separator between recognized elements. (by example a coma between items in an array) </li>
 <li>maximum: optional, the maximum number of elements to recognize (default Infinity)</li>
 </ul>
-<p>xOrMore shortcuts : </p>
+<p><strong>xOrMore shortcuts</strong> : </p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.zeroOrMore(opt /* as above in xOrMore */) : Rule</code>
 </code></pre>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.oneOrMore(opt /* as above in xOrMore (minimum = 1) */) : Rule</code>
