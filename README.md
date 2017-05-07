@@ -86,7 +86,7 @@ __Recognized an optional space__ (/^\s+/ : __one or more__) :
 .space(needed = false) : Rule
 ```
 
-__Force error__ if parser execute it (useful in some cases when placed after end of rule) :
+__Force error__ if parser execute it (Only aimed to be used in .oneOf() as last rule - so if no other rule have been matched -> force error) :
 ```javascript
 .error(msg): Rule
 ```
