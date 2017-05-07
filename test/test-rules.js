@@ -37,7 +37,7 @@ describe("base rules", () => {
 		});
 	});
 
-	describe("use a rule by ref", () => {
+	describe("use a rule by object ref", () => {
 
 		const rules = {
 			a: r.terminal(/^a/)
@@ -51,24 +51,35 @@ describe("base rules", () => {
 		});
 	});
 
+	describe("use a missing rule by string ref", () => {
+		const rules = {
+			b: r.use('a')
+		};
+		const parser = new elenpi.Parser(rules, 'b');
+
+		it("should throw a MissingRule Error", () => {
+			expect(parser.parse.bind(parser, 'a')).to.throw('elenpi parser : rules not found : a');
+		});
+	});
+
 	describe("oneOrMore that push to string ref", () => {
 
 		const rules = {
-			a: r.terminal(/^a/,  (env, obj, cap) => obj.cap = cap[0])
+			a: r.terminal(/^a/, (env, obj, cap) => obj.cap = cap[0])
 		};
 		rules.b = r.oneOrMore({ rule: rules.a, pushTo: 'children' });
 
 		const parser = new elenpi.Parser(rules, 'b');
 
 		it("should parse correctly and produce an array containing catched children", () => {
-			expect(parser.parse('aaa')).to.deep.equals({ children:[{cap:'a'},{cap:'a'},{cap:'a'}]});
+			expect(parser.parse('aaa')).to.deep.equals({ children: [{ cap: 'a' }, { cap: 'a' }, { cap: 'a' }] });
 		});
 	});
 
 	describe("skip rules", () => {
 
 		const rules = {
-			a: r.terminal(/^a/,  (env, obj, cap) => obj.captured = cap[0]).skip()
+			a: r.terminal(/^a/, (env, obj, cap) => obj.captured = cap[0]).skip()
 		};
 		rules.b = r.oneOrMore({ rule: rules.a, pushTo: 'children' });
 
@@ -76,6 +87,188 @@ describe("base rules", () => {
 
 		it("should parse correctly and has no effect", () => {
 			expect(parser.parse('aaa')).to.deep.equals({});
+		});
+	});
+
+	describe("terminal rule", () => {
+
+		const rules = {
+			a: r.terminal(/^aaa/, (env, obj, cap) => obj.captured = cap[0])
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should parse correctly and catch value", () => {
+			expect(parser.parse('aaa')).to.deep.equals({ captured: 'aaa' });
+		});
+	});
+	describe("end rule", () => {
+
+		const rules = {
+			a: r.end()
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should parse correctly", () => {
+			expect(parser.parse('')).to.deep.equals({});
+		});
+	});
+
+	describe("terminal rule that fail because no string to parse", () => {
+
+		const rules = {
+			a: r.terminal(/^a/),
+			b: r.terminal(/^b/),
+			c: r.use('a').use('b')
+		};
+
+		const parser = new elenpi.Parser(rules, 'c');
+
+		it("should throw", () => {
+			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+		});
+	});
+
+	describe("needed space", () => {
+
+		const rules = {
+			a: r.terminal(/^a/).space(true).terminal(/^b/),
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should parse correctly", () => {
+			expect(parser.parse('a  b')).to.deep.equals({});
+		});
+	});
+
+	describe("needed space fail", () => {
+
+		const rules = {
+			a: r.terminal(/^a/).space(true).terminal(/^b/),
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should throw", () => {
+			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+		});
+	});
+
+	describe("needed space fail because no more string", () => {
+
+		const rules = {
+			a: r.terminal(/^a/).space(true),
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should throw", () => {
+			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+		});
+	});
+
+	describe("terminal rule that fail because no end when needed", () => {
+
+		const rules = {
+			a: r.terminal(/^a/).end().terminal(/^b/)
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should parse correctly and catch value", () => {
+			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+		});
+	});
+
+	describe("multiple terminal rule", () => {
+
+		const rules = {
+			a: r.terminal(/^a/),
+			b: r.terminal(/^b/),
+			c: r.terminal(/^c/),
+			d: r.one('a').one('b').one('c')
+		};
+
+		const parser = new elenpi.Parser(rules, 'd');
+
+		it("should parse", () => {
+			expect(parser.parse('abc')).to.deep.equals({});
+		});
+	});
+
+
+	describe("multiple terminal rule that fail", () => {
+
+		const rules = {
+			a: r.terminal(/^a/),
+			b: r.terminal(/^b/),
+			c: r.terminal(/^c/),
+			d: r.one('a').one('b').one('c')
+		};
+
+		const parser = new elenpi.Parser(rules, 'd');
+
+		it("should fail", () => {
+			expect(parser.parse.bind(parser, 'aba')).to.throw('Parsing failed : no rules matched : (line:1 , col:2) near :\n');
+		});
+	});
+	describe("multiple terminal rule that fail on line other line than 1", () => {
+
+		const rules = {
+			a: r.terminal(/^a\n/),
+			b: r.terminal(/^b\n/),
+			c: r.terminal(/^c/),
+			d: r.one('a').one('b').one('c')
+		};
+
+		const parser = new elenpi.Parser(rules, 'd');
+
+		it("should fail", () => {
+			expect(parser.parse.bind(parser, 'a\nb\na')).to.throw('Parsing failed : no rules matched : (line:4 , col:1) near :\n');
+		});
+	});
+
+	describe("still string to parse after parsing", () => {
+
+		const rules = {
+			a: r.terminal(/^a/, (env, obj, cap) => obj.captured = cap[0])
+		};
+
+		const parser = new elenpi.Parser(rules, 'a');
+
+		it("should parse correctly and catch value", () => {
+			expect(parser.parse.bind(parser, 'aaa')).to.throw('Parsing failed : string wasn\'t parsed entierly : (line:1 , col:1) near :\n');
+		});
+	});
+
+	describe("onOrMore rule", () => {
+
+		const rules = {
+			a: r.terminal(/^a/, (env, obj, cap) => obj.captured = cap[0])
+		};
+		rules.b = r.oneOrMore({ rule: rules.a, pushTo: 'children' });
+
+		const parser = new elenpi.Parser(rules, 'b');
+
+		it("should parse correctly and has no effect", () => {
+			expect(parser.parse('aaa')).to.deep.equals({ children: [{ captured: 'a' }, { captured: 'a' }, { captured: 'a' }] });
+		});
+	});
+
+
+	describe("onOrMore rule with pushTo as function", () => {
+
+		const rules = {
+			a: r.terminal(/^a/, (env, obj, cap) => obj.captured = cap[0])
+		};
+		rules.b = r.oneOrMore({ rule: 'a', pushTo: (env, parent, descriptor) => ((parent.children = parent.children || []) && parent.children.push(descriptor)) });
+
+		const parser = new elenpi.Parser(rules, 'b');
+
+		it("should parse correctly and has no effect", () => {
+			expect(parser.parse('aaa')).to.deep.equals({ children: [{ captured: 'a' }, { captured: 'a' }, { captured: 'a' }] });
 		});
 	});
 
