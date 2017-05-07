@@ -58,7 +58,7 @@
 <li>easy DSL prototyping</li>
 <li>quite fast</li>
 </ul>
-<p>Take a look at examples in <a href="https://github.com/nomocas/elenpi/tree/master/src/examples">./src/examples</a>.</p>
+<p>Take a look at examples in <a href="https://github.com/nomocas/elenpi/tree/master/examples">./examples</a>.</p>
 <p><a href="https://doc.esdoc.org/github.com/nomocas/elenpi/">Esdoc references</a></p>
 <h2 id="rule-s-api">Rule&apos;s Api</h2>
 <p>Create a rule instance : </p>
@@ -102,7 +102,7 @@ var rule = r.oneOf(...);</code>
 <p><strong>Recognized an optional space</strong> (/^\s+/ : <strong>one or more</strong>) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.space(needed = false) : Rule</code>
 </code></pre>
-<p><strong>Force error</strong> if parser execute it (useful in some cases when placed after end of rule) :</p>
+<p><strong>Force error</strong> if parser execute it (Only aimed to be used in .oneOf() as last rule - so if no other rule have been matched -&gt; force error) :</p>
 <pre><code class="lang-javascript"><code class="source-code prettyprint">.error(msg): Rule</code>
 </code></pre>
 <p><strong>Match elements</strong> in strings <strong>through one rule</strong> (maybe optional) :</p>
@@ -183,7 +183,7 @@ var  r = parser.parse(&apos;a string to parse&apos;, ruleToApply = null, objectW
 
 // If parsing succeed, descriptor has been decorated with catched properties</code>
 </code></pre>
-<p><strong>see parsers examples</strong> in <a href="https://github.com/nomocas/elenpi/tree/master/src/examples">./src/examples</a></p>
+<p><strong>see parsers examples</strong> in <a href="https://github.com/nomocas/elenpi/tree/master/examples">./examples</a></p>
 <h2 id="licence">Licence</h2>
 <p>The <a href="http://opensource.org/licenses/MIT">MIT</a> License</p>
 <p>Copyright (c) 2015-2017 Gilles Coomans <a href="mailto:gilles.coomans@gmail.com">gilles.coomans@gmail.com</a></p>
