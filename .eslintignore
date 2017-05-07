@@ -1,0 +1,5 @@
+docs/*
+plato/*
+dist/*
+coverage/*
+.nyc_output/*
