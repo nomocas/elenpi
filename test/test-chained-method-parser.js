@@ -6,7 +6,7 @@
 /* global describe, it */
 import chai from 'chai';
 // import elenpi from '../src/index.js';
-import parser from '../src/examples/chained-methods-parser.js';
+import parser from '../examples/chained-methods-parser.js';
 
 // const r = elenpi.r;
 const expect = chai.expect;

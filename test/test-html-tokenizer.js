@@ -6,7 +6,7 @@
 /* global describe, it */
 import chai from 'chai';
 // import elenpi from '../src/index.js';
-import parser from '../src/examples/html-tokenizer.js';
+import parser from '../examples/html-tokenizer.js';
 
 // const r = elenpi.r;
 const expect = chai.expect;
