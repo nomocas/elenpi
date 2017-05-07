@@ -51,6 +51,7 @@ The fundamental atom of elenpi : a simple handler that take an object (env) cont
 ```
 
 Recognize a terminal (aka try to match a regexp at beginning of current string).
+
 Second argument : 
 - could be the name of the property in descriptor where elenpi will store first value of the regexp matching output ("captured" below, which is an array with captured parts)
 - could be a function that receive the "env" object, the current descriptor, and the "captured" regexp output. You're free to do what you want. __You should not manage the rest of the string__ (it will be done by elenpi).
@@ -85,7 +86,7 @@ Recognized an optional space (/^\s+/ : __one or more__).
 .space(needed = false) : Rule
 ```
 
-Force error if parser execute it (useful in some case when place after end of rule)
+Force error if parser execute it (useful in some cases when placed after end of rule)
 ```javascript
 .error(msg): Rule
 ```
