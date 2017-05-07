@@ -2,7 +2,7 @@
  * @author Gilles Coomans <gilles.coomans@gmail.com>
  * elenpi rules for primitives function's arguments. aka : "double", 'single', 1.12, 14, true, false
  */
-import elenpi from '../index.js';
+import elenpi from '../src/index.js';
 const r = elenpi.Rule.initializer;
 
 /**

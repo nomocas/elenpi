@@ -3,7 +3,7 @@
  * html tokenizer
  */
 
-import elenpi from '../index.js';
+import elenpi from '../src/index.js';
 const r = elenpi.Rule.initializer,
 	Parser = elenpi.Parser,
 	exec = Parser.exec,

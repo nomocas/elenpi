@@ -5,7 +5,7 @@
  * see tests for result
  */
 
-import elenpi from '../index.js';
+import elenpi from '../src/index.js';
 
 const r = elenpi.Rule.initializer,
 	rules = {
