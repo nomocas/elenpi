@@ -38,9 +38,9 @@ var  r = Rule.initializer;
 var rule = r.oneOf(...);
 ```
 
-Behaviour : 
+__The Atom__ : 
 
-The fundamental atom of elenpi : a simple handler that take an object (env) containing the __rest of the string__ to parse and the errors report, and the current object descriptor where to store catched information.
+The fundamental atom of elenpi : a simple handler that take an object (`env`) containing the __rest of the string__ to parse and the errors report, and the current `descriptor` where to store catched information.
 ```javascript
 .done(function(env, descriptor){
 	// place information in current descriptor
@@ -50,50 +50,49 @@ The fundamental atom of elenpi : a simple handler that take an object (env) cont
 }) : Rule
 ```
 
-Recognize a terminal (aka try to match a regexp at beginning of current string).
-
-Second argument : 
-- could be the name of the property in descriptor where elenpi will store first value of the regexp matching output ("captured" below, which is an array with captured parts)
-- could be a function that receive the "env" object, the current descriptor, and the "captured" regexp output. You're free to do what you want. __You should not manage the rest of the string__ (it will be done by elenpi).
+__Recognize a terminal__ (aka try to match a regexp at beginning of current string) :
 ```javascript
 .terminal(RegExp, ?String || ?function(env, descriptor, captured){
 	descriptor.something = captured[1]; // example
 }) : Rule
 ```
+Second argument : 
+- could be the name of the property in descriptor where elenpi will store first value of the regexp matching output ("captured" below, which is an array with captured parts)
+- could be a function that receive the "env" object, the current descriptor, and the "captured" regexp output. You're free to do what you want. __You should not manage the rest of the string__ (it will be done by elenpi).
 
-Recognize a single char, that will __not__ be stored in descriptor.
+
+__Recognize a single char__, that will __not__ be stored in descriptor :
 ```javascript
 .char( String ) : Rule
 ```
 
-Impose the end of string there.
+__Need the end of string__ there :
 ```javascript
 .end() : Rule
 ```
 
-Use a rule, either by name (will be found in parser's rules), or by providing a rule instance (that will be "inserted" there).
+__Use a rule__, either by name (will be found in parser's rules), or by providing a rule instance (that will be "inserted" there) :
 ```javascript
 .use(ruleName:String||rule:Rule) : Rule
 ```
 
-Place a `skip:true` in current descriptor and so elenpi will ignored it.
+__Skip__ an element : Place a `skip:true` in current descriptor and so __elenpi will ignored it__ :
 ```javascript
 .skip() : Rule
 ```
 
-Recognized an optional space (/^\s+/ : __one or more__).
+__Recognized an optional space__ (/^\s+/ : __one or more__) :
 ```javascript
 .space(needed = false) : Rule
 ```
 
-Force error if parser execute it (useful in some cases when placed after end of rule)
+__Force error__ if parser execute it (useful in some cases when placed after end of rule) :
 ```javascript
 .error(msg): Rule
 ```
 
 
-Match elements in strings through one rule (maybe optional) :
-
+__Match elements__ in strings __through one rule__ (maybe optional) :
 ```javascript
 .one(rule || { 
 	rule:rule, 
@@ -117,8 +116,7 @@ Match elements in strings through one rule (maybe optional) :
 	- either a function that receive "env", the __parent descriptor__, and the __descriptor__.
 
 
-Match elements in strings through one of provided rules :
-
+__Match elements__ in strings __through one of__ provided rules :
 ```javascript
 .oneOf(...rules || { 
 	rules:[rules], 
@@ -136,8 +134,7 @@ Match elements in strings through one of provided rules :
 ```
 
 
-Match x or more element in string with provided rule (and maybe a separator rule) :
-
+__Match x or more elements__ in string with provided rule (and maybe a separator rule) :
 ```javascript
 .xOrMore({ 
 	rule:rule,
@@ -160,8 +157,7 @@ Match x or more element in string with provided rule (and maybe a separator rule
 
 
 
-xOrMore shortcuts : 
-
+__xOrMore shortcuts__ : 
 ```javascript
 .zeroOrMore(opt /* as above in xOrMore */) : Rule
 ```
