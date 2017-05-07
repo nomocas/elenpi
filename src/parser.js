@@ -1,8 +1,8 @@
 /*
-* @Author: Gilles Coomans
-* @Last Modified by:   Gilles Coomans
-* @Last Modified time: 2017-05-07 23:42:17
-*/
+ * @Author: Gilles Coomans
+ * @Last Modified by:   Gilles Coomans
+ * @Last Modified time: 2017-05-08 00:53:57
+ */
 
 /**
  * The Parser class.
@@ -79,18 +79,14 @@ class Parser {
 	 * @throws {Error} If rule is string (so it's a rule's name) and referenced rule could not be found with it.
 	 */
 	static exec(rule, descriptor, env) {
-		if (env.error)
-			return;
+		// if (env.error)
+			// return;
 		if (typeof rule === 'string')
 			rule = env.parser.getRule(rule);
 
 		const rules = rule._queue;
-		for (let i = 0, current, len = rules.length; i < len; ++i) {
-			current = rules[i];
-			if (current.__elenpi__)
-				Parser.exec(current, descriptor, env);
-			else // is function
-				current(env, descriptor);
+		for (let i = 0, len = rules.length; i < len; ++i) {
+			rules[i](env, descriptor);
 			if (env.error)
 				break;
 		}
