@@ -41,9 +41,9 @@ class Rule {
 		return this.done((env, descriptor) => {
 			if (typeof rule === 'string')
 				rule = env.parser.getRule(rule);
-			if (rule.__elenpi__) {
-				exec(rule, descriptor, env);
-			}
+			// if (rule.__elenpi__) {
+			exec(rule, descriptor, env);
+			// }
 			/* else if(typeof rule === 'function') {
 				const r = new Rule();
 				rule.apply(r, args);
@@ -123,7 +123,7 @@ class Rule {
 				restLength;
 
 			while (env.string.length && count < opt.maximum) {
-				
+
 				newDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);
 				currentPosition = env.string.length;
 
@@ -147,7 +147,7 @@ class Rule {
 					} else
 						pushTo(env, descriptor, newDescriptor);
 
-				// manage separator
+					// manage separator
 				if (separator && restLength) {
 					currentPosition = restLength;
 					exec(separator, newDescriptor, env);
