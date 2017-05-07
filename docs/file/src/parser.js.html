@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/parser.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+<link data-ice="userStyle" rel="stylesheet" href="user/css/0-style.css">
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <a data-ice="repoURL" href="https://github.com/nomocas/elenpi.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/rule.js~Rule.html">Rule</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-elenpi">elenpi</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/parser.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/*
+* @Author: Gilles Coomans
+* @Last Modified by:   Gilles Coomans
+* @Last Modified time: 2017-05-07 23:42:17
+*/
+
+/**
+ * The Parser class.
+ * @public
+ */
+class Parser {
+
+	/**
+	 * @param  {Object} rules       an object containing rules
+	 * @param  {String} defaultRule the default rule to use when parsing
+	 */
+	constructor(rules, defaultRule) {
+
+		/**
+		 * the rules map
+		 * @type {Object}
+		 */
+		this.rules = rules;
+
+		/**
+		 * the default rule&apos;s name to use
+		 * @type {String}
+		 */
+		this.defaultRule = defaultRule;
+	}
+
+	/**
+	 * find rule by name
+	 * @param  {String} name the rule&apos;s name
+	 * @return {Rule}      the finded rule
+	 * @throws {Error} If rule not found
+	 */
+	getRule(name) {
+		const r = this.rules[name];
+		if (!r)
+			throw new Error(&apos;elenpi parser : rules not found : &apos; + name);
+		return r;
+	}
+
+	/**
+	 * Parse provided string with specific rule
+	 * @param  {String} string     the string to parse
+	 * @param  {?String} rule       the name of the rule to apply. default is null (will use parser&apos;s default method if not provided).
+	 * @param  {?Object} descriptor the main descriptor object
+	 * @param  {?Object} env 		the env object (internal object used while parsing)
+	 * @return {Object}            the decorated descriptor
+	 * @throws {Error} If parsing fail (for any reason)
+	 */
+	parse(string, rule = null, descriptor = {}, env = null) {
+		env = env || {};
+		env.parser = this;
+		env.string = string;
+		rule = rule || this.getRule(this.defaultRule);
+		Parser.exec(rule, descriptor, env);
+		if (!env.error &amp;&amp; env.string.length) {
+			env.error = true;
+			env.errorMessage = &apos;string wasn\&apos;t parsed entierly&apos;;
+		}
+		if (env.error) {
+			const pos = string.length - env.string.length,
+				posInFile = getPositionInFile(string, pos);
+			throw new Error(&apos;Parsing failed : &apos; + (env.errorMessage || &apos;no rules matched&apos;) + &apos; : (line:&apos; + posInFile.line + &apos; , col:&apos; + posInFile.col + &apos;) near :\n&apos;, string.substring(pos, pos + 50));
+		}
+		return descriptor;
+	}
+
+	/**
+	 * Execute a rule (only for those who developing grammars)
+	 * @param  {String|Rule} rule      the name of the rule to use or the rule itself
+	 * @param  {Object} descriptor the descriptor to decorate
+	 * @param  {Object} env        the inner-job main object where parser, parsed string and eventual errors are stored
+	 * @return {Void}            nothing
+	 * @public
+	 * @throws {Error} If rule is string (so it&apos;s a rule&apos;s name) and referenced rule could not be found with it.
+	 */
+	static exec(rule, descriptor, env) {
+		if (env.error)
+			return;
+		if (typeof rule === &apos;string&apos;)
+			rule = env.parser.getRule(rule);
+
+		const rules = rule._queue;
+		for (let i = 0, current, len = rules.length; i &lt; len; ++i) {
+			current = rules[i];
+			if (current.__elenpi__)
+				Parser.exec(current, descriptor, env);
+			else // is function
+				current(env, descriptor);
+			if (env.error)
+				break;
+		}
+	}
+}
+
+function getPositionInFile(string, position) {
+	const splitted = string.split(/\r|\n/),
+		len = splitted.length;
+	let lineNumber = 0,
+		current = 0,
+		line,
+		lineLength;
+	while (lineNumber &lt; len) {
+		line = splitted[lineNumber];
+		lineLength = line.length;
+		if (position &lt;= (current + lineLength))
+			break;
+		current += lineLength;
+		lineNumber++;
+	}
+	return {
+		line: lineNumber + 1,
+		col: position - current
+	};
+}
+
+export default Parser;
+
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

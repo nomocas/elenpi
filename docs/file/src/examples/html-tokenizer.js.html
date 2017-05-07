@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">src/examples/html-tokenizer.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+<link data-ice="userStyle" rel="stylesheet" href="user/css/0-style.css">
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <a data-ice="repoURL" href="https://github.com/nomocas/elenpi.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/rule.js~Rule.html">Rule</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-elenpi">elenpi</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/examples/html-tokenizer.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/** 
+ * @author Gilles Coomans &lt;gilles.coomans@gmail.com&gt;
+ * html tokenizer
+ */
+
+import elenpi from &apos;../index.js&apos;;
+const r = elenpi.Rule.initializer,
+	Parser = elenpi.Parser,
+	exec = Parser.exec,
+	attributeExpr = /^([\w-_]+)\s*(?:=\s*(&quot;([^&quot;]*)&quot;|[\w-_]+))?\s*/,
+	openTags = /^(br|input|img|area|base|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)/,
+	onlySpace = /^\s+$/,
+	rawContentTags = /^(?:script|style|code)/;
+
+const rules = {
+	document: r
+		.zeroOrMore(r.space().one(&apos;comment&apos;))
+		.terminal(/^\s*&lt;!DOCTYPE[^&gt;]*&gt;\s*/i)
+		.one(&apos;children&apos;)
+		.space(),
+
+	comment: r.terminal(/^&lt;!--([\s\S]*)?(?=--&gt;)--&gt;/, (env, obj, cap) =&gt; obj.comment = cap[1]),
+
+	// closing tag
+	tagEnd: r.terminal(/^\s*&lt;\/([\w-_\:]+)\s*&gt;/, (env, obj, cap) =&gt; {
+		if (obj.tagName !== cap[1]) {
+			env.errors = env.errors || [];
+			env.errors.push(&apos;tag badly closed : &apos; + cap[1] + &apos; - (at opening : &apos; + obj.tagName + &apos;)&apos;);
+		}
+	}),
+
+	// tag children
+	children: r
+		.zeroOrMore({
+			pushTo: &apos;children&apos;,
+			rule: r.oneOf(&apos;comment&apos;, &apos;text&apos;, &apos;tag&apos;)
+		}),
+
+	text: r.terminal(/^[^&lt;]+/, (env, obj, cap) =&gt; {
+		const val = cap[0];
+		if (onlySpace.test(val)) 
+			obj.skip = true;
+		else 
+			obj.textValue = val;
+	}),
+
+	// normal tag (including raw tags)
+	tag: r
+		// start tag
+		.terminal(/^&lt;([\w-_\:]+)\s*/, (env, obj, cap) =&gt; obj.tagName = cap[1])
+		// attributes
+		.zeroOrMore(
+			// attrName | attrName=&quot;... ...&quot; | attrName=something | attrName={{ .. }} | attrName={ .. }
+			// with an optional space (\s*) after equal sign (if any).
+			r.terminal(attributeExpr, (env, obj, cap) =&gt; {
+				const attrName = cap[1],
+					value = (cap[3] !== undefined) ? cap[3] : ((cap[2] !== undefined) ? cap[2] : &apos;&apos;);
+				switch (attrName) {
+					case &apos;class&apos;:
+						if (!value)
+							break;
+						obj.classes = value.split(/\s+/);
+						break;
+					default:
+						obj.attributes = obj.attributes || {};
+						obj.attributes[attrName] = value;
+						break;
+				}
+			})
+		)
+		.oneOf(
+			r.char(&apos;&gt;&apos;)
+			.done((env, obj) =&gt; {
+				// check html5 unstrict self-closing tags
+				if (openTags.test(obj.tagName))
+					return; // no children
+
+				if (rawContentTags.test(obj.tagName)) // get raw content
+					return rawContent(obj.tagName, env, obj);
+
+				// get inner tag content
+				exec(env.parser.rules.children, obj, env);
+				if (!env.error) // close tag
+					exec(env.parser.rules.tagEnd, obj, env);
+			}),
+			// strict self closed tag
+			r.terminal(/^\/&gt;/),
+			r.error(&apos;Missing end of tag&apos;)
+		)
+};
+
+// raw inner content of tag
+function rawContent(tagName, env, tag) {
+	const index = env.string.indexOf(&apos;&lt;/&apos; + tagName + &apos;&gt;&apos;);
+	if (index === -1) {
+		env.error = true;
+		env.errorMessage = tagName + &apos; tag not closed.&apos;;
+		return;
+	}
+	if (index) // more than 0
+		tag.rawContent = env.string.substring(0, index);
+	env.string = env.string.substring(index + tagName.length + 3);
+}
+
+const parser = new Parser(rules, &apos;children&apos;);
+
+export default parser;
+
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

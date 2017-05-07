@@ -1,0 +1,155 @@
+/*
+* @Author: gilles
+*/
+@import url('https://fonts.googleapis.com/css?family=Lato');
+.content {
+    margin-top: 40px;
+    margin-left: 250px;
+    padding: 50px 50px 10px 50px;
+}
+
+.github-markdown h1,
+.github-markdown h2,
+.github-markdown h3 {
+    font-family: 'Lato', sans-serif;
+}
+
+.github-markdown blockquote {
+    margin-left: 5px;
+    border-left: 7px solid #72AEC6;
+    padding-left: 15px;
+    color:#666;
+}
+.content .detail > h1 {
+    margin-top: 40px;
+}
+
+.content h1 {
+    font-family: 'Lato', sans-serif;
+    border-bottom: 1px dashed #DDD;
+}
+
+.content h2 {
+    margin-top: 60px;
+}
+h2 {
+    font-weight: 200;
+    font-family: 'Lato', sans-serif;
+    border-bottom: 1px dashed #DDD;
+}
+
+.content .detail > h3 {
+    border-radius: 5px;
+    background: #caebf1;
+    padding: 5px 10px;
+}
+
+table.summary thead {
+    background: #5990a7;
+}
+
+[data-ice="memberDetails"] h3 {
+    background: #EFE0C0;
+}
+
+.content .detail .access {
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.kind-function {
+    color: #7A0053;
+    background-color: #D5A5C1;
+}
+
+.kind-class,
+.kind-external,
+.kind-variable,
+.kind-function {
+    padding: 4px;
+}
+
+.summary div[data-ice="description"] p {
+    color: #444;
+    font-size: 14px;
+    padding: 7px;
+}
+/********************************** MISC ***************************/
+
+.inner-link-active { /* highlight of title when clicked on nav */
+    background: #7BD2DC;
+}
+
+
+/********************************** CODE ***************************/
+
+.github-markdown pre > code {
+    font-size: 0.75em;
+    padding:15px;
+}
+
+pre.prettyprint,
+pre > code {
+    overflow: auto;
+}
+
+
+/********************************** HEADER ***************************/
+
+.layout-container > header {
+    border: none;
+    background-color: white;
+}
+
+
+/********************************** FOOTER ***************************/
+
+footer,
+.file-footer {
+    border-top: 1px dashed #ddd;
+}
+
+
+/********************************** NAVIGATION ***************************/
+
+.navigation {
+    /*border-right: 1px dashed #ddd;*/
+    border: none;
+    box-shadow: none;
+    background-color: white;
+}
+
+.manual-toc .indent-h1 {}
+
+.manual-color-overview {
+    color: #db001e;
+    background-color: #6AD9E6;
+}
+
+.manual-color-design {
+    color: #db001e;
+    background-color: #E8EBB0;
+}
+
+.manual-color-installation,
+.manual-color-usage {
+    color: #009800;
+    background-color: #BBE2B1;
+}
+
+.manual-color-tutorial,
+.manual-color-configuration,
+.manual-color-advanced {
+    color: #009800;
+    background-color: #bfe5e4;
+}
+
+.manual-color-example {
+    color: #eb6420;
+    background-color: #A2DC8C;
+}
+
+.manual-color-reference {
+    color: #6b0090;
+    background-color: #e4c759;
+}

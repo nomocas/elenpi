@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl">
+  <title data-ice="title">API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+<link data-ice="userStyle" rel="stylesheet" href="user/css/0-style.css">
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <a data-ice="repoURL" href="https://github.com/nomocas/elenpi.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/rule.js~Rule.html">Rule</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-elenpi">elenpi</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><h1 id="elenpi">elenpi</h1>
+<p><a href="https://travis-ci.org/nomocas/elenpi"><img src="https://img.shields.io/travis/nomocas/elenpi/master.svg" alt="Travis branch"></a>
+<a href="https://www.bithound.io/github/nomocas/elenpi"><img src="https://www.bithound.io/github/nomocas/elenpi/badges/score.svg" alt="bitHound Overall Score"></a>
+<a href="https://coveralls.io/github/nomocas/elenpi?branch=master"><img src="https://coveralls.io/repos/github/nomocas/elenpi/badge.svg?branch=master" alt="Coverage Status"></a>
+<a href=""><img src="https://img.shields.io/npm/dm/elenpi.svg" alt="npm-downloads"></a>
+<a href=""><img src="https://img.shields.io/david/nomocas/elenpi.svg" alt="dependecies"></a>
+<a href=""><img src="https://img.shields.io/david/dev/nomocas/elenpi.svg" alt="dev-dependencies"></a>
+<a href="https://conventionalcommits.org"><img src="https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg" alt="Conventional Commits"></a>
+<a href=""><img src="https://img.shields.io/npm/v/elenpi.svg" alt="npm"></a>
+<a href=""><img src="https://img.shields.io/npm/l/elenpi.svg" alt="licence"></a></p>
+<p>Small javascript LL(1) Parser generator through simple and expressive DSL. </p>
+<p>Allow to describe parser rules with structured sentences based on Method Chaining.</p>
+<ul>
+<li>really short, clear, clean and maintenable parser rules</li>
+<li>less than 2ko gzip/minified</li>
+<li>easy DSL prototyping</li>
+<li>quite fast</li>
+</ul>
+<p>Take a look at examples in <a href="https://github.com/nomocas/elenpi/tree/master/src/examples">./src/examples</a>.</p>
+<p><a href="https://doc.esdoc.org/github.com/nomocas/elenpi/">Esdoc references</a></p>
+<h2 id="rule-s-api">Rule&apos;s Api</h2>
+<p>Create a rule instance : </p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">var rule = new Rule();</code>
+</code></pre>
+<p>or using shortcut :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">var  r = Rule.initializer;
+var rule = r.oneOf(...);</code>
+</code></pre>
+<p>Behaviour : </p>
+<p>The fundamental atom of elenpi : a simple handler that take an object (env) containing the <strong>rest of the string</strong> to parse and the errors report, and the current object descriptor where to store catched information.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.done(function(env, descriptor){
+    // place information in current descriptor
+    descriptor.foo = env.string...;
+    // when information catched : your responsible to replace THE REST of the string in env.
+    env.string = env.string.substring(...);
+}) : Rule</code>
+</code></pre>
+<p>Recognize a terminal (aka try to match a regexp at beginning of current string).</p>
+<p>Second argument : </p>
+<ul>
+<li>could be the name of the property in descriptor where elenpi will store first value of the regexp matching output (&quot;captured&quot; below, which is an array with captured parts)</li>
+<li>could be a function that receive the &quot;env&quot; object, the current descriptor, and the &quot;captured&quot; regexp output. You&apos;re free to do what you want. <strong>You should not manage the rest of the string</strong> (it will be done by elenpi).<pre><code class="lang-javascript"><code class="source-code prettyprint">.terminal(RegExp, ?String || ?function(env, descriptor, captured){
+  descriptor.something = captured[1]; // example
+}) : Rule</code>
+</code></pre>
+</li>
+</ul>
+<p>Recognize a single char, that will <strong>not</strong> be stored in descriptor.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.char( String ) : Rule</code>
+</code></pre>
+<p>Impose the end of string there.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.end() : Rule</code>
+</code></pre>
+<p>Use a rule, either by name (will be found in parser&apos;s rules), or by providing a rule instance (that will be &quot;inserted&quot; there).</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.use(ruleName:String||rule:Rule) : Rule</code>
+</code></pre>
+<p>Place a <code>skip:true</code> in current descriptor and so elenpi will ignored it.</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.skip() : Rule</code>
+</code></pre>
+<p>Recognized an optional space (/^\s+/ : <strong>one or more</strong>).</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.space(needed = false) : Rule</code>
+</code></pre>
+<p>Force error if parser execute it (useful in some cases when placed after end of rule)</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.error(msg): Rule</code>
+</code></pre>
+<p>Match elements in strings through one rule (maybe optional) :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.one(rule || { 
+    rule:rule, 
+    ?as:function(){ return Instance }, 
+    ?set:&apos;name&apos; || function(env, parent, descriptor){ ... } 
+}) : Rule</code>
+</code></pre>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.maybeOne(rule || { 
+    rule:rule, 
+    ?as:function(){ return Instance }, 
+    ?set:&apos;name&apos; || function(env, parent, descriptor){ ... } 
+}) : Rule</code>
+</code></pre>
+<ul>
+<li>rule : the rule to apply (ruleName:String||rule:Rule)</li>
+<li>as : optional, a function that return <strong>a descriptor instance to use with the provided rule</strong></li>
+<li>set : optional, <ul>
+<li>either a string that give the property&apos;s name where to store descriptor (the one created by the &quot;as&quot; function) in parent descriptor</li>
+<li>either a function that receive &quot;env&quot;, the <strong>parent descriptor</strong>, and the <strong>descriptor</strong>.</li>
+</ul>
+</li>
+</ul>
+<p>Match elements in strings through one of provided rules :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.oneOf(...rules || { 
+    rules:[rules], 
+    ?as:function(){ return Instance }, 
+    ?set:&apos;name&apos; || function(env, parent, descriptor){ ... } 
+}) : Rule</code>
+</code></pre>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.maybeOneOf(...rules || {
+    rules:[rules], 
+    ?as:function(){ return Instance }, 
+    ?set:&apos;name&apos; || function(env, parent, descriptor){ ... } 
+})</code>
+</code></pre>
+<p>Match x or more element in string with provided rule (and maybe a separator rule) :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.xOrMore({ 
+    rule:rule,
+    minimum:int = 0,
+    ?as:function(){ return Instance }, 
+    ?pushTo:&apos;name&apos; || function(env, parent, descriptor){ ... },
+    ?separator:rule,
+    ?maximum:int = Infinity
+}) : Rule</code>
+</code></pre>
+<ul>
+<li>rule : the rule to apply (ruleName:String||rule:Rule)</li>
+<li>minimum: the minimum number of elements to recognize (default 0)</li>
+<li>as : optional, a function that return <strong>a descriptor instance to use with the provided rule</strong></li>
+<li>pushTo : optional, <ul>
+<li>either a string that give the property&apos;s name where to <strong>PUSH</strong> descriptor (the one created by the &quot;as&quot; function) in parent descriptor</li>
+<li>either a function that receive &quot;env&quot;, the <strong>parent descriptor</strong>, and the <strong>descriptor</strong>.</li>
+</ul>
+</li>
+<li>separator: optional, a rule that express the possible separator between recognized elements. (by example a coma between items in an array) </li>
+<li>maximum: optional, the maximum number of elements to recognize (default Infinity)</li>
+</ul>
+<p>xOrMore shortcuts : </p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.zeroOrMore(opt /* as above in xOrMore */) : Rule</code>
+</code></pre>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">.oneOrMore(opt /* as above in xOrMore (minimum = 1) */) : Rule</code>
+</code></pre>
+<h2 id="parser-s-api">Parser&apos;s API</h2>
+<p>Constructor :</p>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">var parser = new Parser(rulesObject, &apos;defaultRulesName&apos;);</code>
+</code></pre>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">var  r = parser.parse(&apos;a string to parse&apos;, ?ruleToApply); // parse until the end of string
+// r is false if parsing failed
+// Otherwise, r is a descriptor object containing catched properties</code>
+</code></pre>
+<pre><code class="lang-javascript"><code class="source-code prettyprint">var descriptor = {};
+var  r = parser.parse(&apos;a string to parse&apos;, ruleToApply = null, objectWhereStoreTokens = null);
+
+// r is false if parsing failed
+// Otherwise, r is the string that still to be parsed
+
+// If parsing succeed, descriptor has been decorated with catched properties</code>
+</code></pre>
+<p><strong>see parsers examples</strong> in <a href="https://github.com/nomocas/elenpi/tree/master/src/examples">./src/examples</a></p>
+<h2 id="licence">Licence</h2>
+<p>The <a href="http://opensource.org/licenses/MIT">MIT</a> License</p>
+<p>Copyright (c) 2015-2017 Gilles Coomans <a href="mailto:gilles.coomans@gmail.com">gilles.coomans@gmail.com</a></p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &apos;Software&apos;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &apos;AS IS&apos;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

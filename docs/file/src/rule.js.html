@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/rule.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+<link data-ice="userStyle" rel="stylesheet" href="user/css/0-style.css">
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <a data-ice="repoURL" href="https://github.com/nomocas/elenpi.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/parser.js~Parser.html">Parser</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/rule.js~Rule.html">Rule</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-elenpi">elenpi</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/rule.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/*
+ * @Author: Gilles Coomans
+ */
+
+import Parser from &apos;./parser.js&apos;;
+
+const defaultSpaceRegExp = /^\s+/,
+	exec = Parser.exec;
+
+/**
+ * The Rule base class.
+ * @public
+ */
+class Rule {
+
+	/**
+	 * the Rule constructor
+	 */
+	constructor() {
+		this._queue = [];
+		this.__elenpi__ = true;
+	}
+
+	/**
+	 * the base handler for every other lexems
+	 * @param  {Function} callback the callback to handle string
+	 * @return {Rule}          this rule handler
+	 */
+	done(callback) {
+		this._queue.push(callback);
+		return this;
+	}
+
+	/**
+	 * use another rule  
+	 * @param  {String|Rule|function} rule the rule to use
+	 * @return {Rule}          this rule handler
+	 */
+	use(rule) {
+		// const args = [].slice.call(arguments, 1);
+		return this.done((env, descriptor) =&gt; {
+			if (typeof rule === &apos;string&apos;)
+				rule = env.parser.getRule(rule);
+			if (rule.__elenpi__) {
+				exec(rule, descriptor, env);
+			}
+			/* else if(typeof rule === &apos;function&apos;) {
+				const r = new Rule();
+				rule.apply(r, args);
+				exec(r, descriptor, env);
+			}*/
+		});
+	}
+
+	/**
+	 * catch a terminal
+	 * @param  {RegExp} reg the terminal&apos;s regexp
+	 * @param  {String|Function} set either the name of the property (in current descriptor) where store the catched value 
+	 *                           or a function to handle captured object by hand 
+	 * @return {Rule}          this rule handler
+	 */
+	terminal(reg, set) {
+		return this.done((env, descriptor) =&gt; {
+			if (!env.string.length) {
+				env.error = true;
+				return;
+			}
+			const cap = reg.exec(env.string);
+			if (cap) {
+				env.string = env.string.substring(cap[0].length);
+				if (set) {
+					if (typeof set === &apos;string&apos;)
+						descriptor[set] = cap[0];
+					else
+						set(env, descriptor, cap);
+				}
+			} else
+				env.error = true;
+		});
+	}
+
+	/**
+	 * match a single character
+	 * @param  {String} test the caracter to match
+	 * @return {Rule}          this rule handler
+	 */
+	char(test) {
+		return this.done((env) =&gt; {
+			if (!env.string.length || env.string[0] !== test)
+				env.error = true;
+			else
+				env.string = env.string.substring(1);
+		});
+	}
+
+	/**
+	 * match x or more element from string with provided rule
+	 * @param  {Rule|Object} rule either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	xOrMore(rule) {
+		const opt = (typeof rule === &apos;string&apos; || rule.__elenpi__) ? {
+			rule
+		} : rule;
+		opt.minimum = opt.minimum || 0;
+		opt.maximum = opt.maximum || Infinity;
+		return this.done((env, descriptor) =&gt; {
+
+			if (opt.minimum &amp;&amp; !env.string.length) {
+				env.error = true;
+				return;
+			}
+
+			const rule = opt.rule,
+				pushTo = opt.pushTo,
+				pushToString = typeof pushTo === &apos;string&apos;,
+				As = opt.as,
+				separator = opt.separator;
+
+			let count = 0,
+				currentPosition,
+				newDescriptor,
+				restLength;
+
+			while (env.string.length &amp;&amp; count &lt; opt.maximum) {
+				
+				newDescriptor = As ? As(env, descriptor) : (pushTo ? {} : descriptor);
+				currentPosition = env.string.length;
+
+				exec(rule, newDescriptor, env);
+
+				restLength = env.string.length;
+
+				if (env.error) {
+					if (currentPosition === restLength) // has not moved deeper : so try next rule
+						env.error = false;
+					break;
+				}
+
+				count++;
+
+				// store new descriptor in parent descriptor
+				if (!newDescriptor.skip &amp;&amp; pushTo)
+					if (pushToString) {
+						descriptor[pushTo] = descriptor[pushTo] || [];
+						descriptor[pushTo].push(newDescriptor);
+					} else
+						pushTo(env, descriptor, newDescriptor);
+
+				// manage separator
+				if (separator &amp;&amp; restLength) {
+					currentPosition = restLength;
+					exec(separator, newDescriptor, env);
+					if (env.error) {
+						if (currentPosition === env.string.length)
+							env.error = false;
+						break;
+					}
+				}
+			}
+
+			if (!env.error &amp;&amp; count &lt; opt.minimum) {
+				env.error = true;
+				env.errorMessage = &quot;missing xOrMore item : &quot; + rule;
+			}
+		});
+	}
+
+	/**
+	 * match 0 or more element from string with provided rule
+	 * @param  {Rule|Object} rule either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	zeroOrMore(rule) {
+		return this.xOrMore(rule);
+	}
+
+	/**
+	 * match 1 or more element from string with provided rule
+	 * @param  {Rule|Object} rule either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	oneOrMore(rule) {
+		if (typeof rule === &apos;string&apos; || rule.__elenpi__)
+			rule = {
+				rule,
+				minimum: 1
+			};
+		else
+			rule.minimum = 1;
+		return this.xOrMore(rule);
+	}
+
+	/**
+	 * match one element from string with one of provided rules
+	 * @param  {Rule|Object} rules either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	oneOf(rules) {
+		const opt = (typeof rules === &apos;string&apos; || rules.__elenpi__) ? {
+			rules: [].slice.call(arguments)
+		} : rules;
+		return this.done((env, descriptor) =&gt; {
+
+			if (!opt.optional &amp;&amp; !env.string.length) {
+				env.error = true;
+				return;
+			}
+
+			const len = opt.rules.length,
+				currentPosition = env.string.length;
+
+			let count = 0,
+				rule,
+				newDescriptor;
+
+			while (count &lt; len) {
+				rule = opt.rules[count++];
+				newDescriptor = opt.as ? opt.as(env, descriptor) : (opt.set ? {} : descriptor);
+				exec(rule, newDescriptor, env);
+				if (env.error) {
+					if (env.string.length === currentPosition) {
+						env.error = false;
+						continue;
+					}
+				} else
+					setDescriptor(descriptor, newDescriptor, opt.set, env);
+				return;
+			}
+			if (!opt.optional)
+				env.error = true;
+		});
+	}
+
+	/**
+	 * maybe match one element from string with one of provided rules
+	 * @param  {Rule|Object} rules either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	maybeOneOf(rules) {
+		const opt = (typeof rules === &apos;string&apos; || rules.__elenpi__) ? {
+			rules: [].slice.call(arguments)
+		} : rules;
+		opt.optional = true;
+		return this.oneOf(opt);
+	}
+
+	/**
+	 * match one element from string with provided rule
+	 * @param  {Rule|Object} rule either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	one(rule) {
+		const opt = (typeof rule === &apos;string&apos; || (rule &amp;&amp; rule.__elenpi__)) ? {
+			rule
+		} : rule;
+		return this.done((env, descriptor) =&gt; {
+			if (!opt.optional &amp;&amp; !env.string.length) {
+				env.error = true;
+				return;
+			}
+			const newDescriptor = opt.as ? opt.as(env, descriptor) : (opt.set ? {} : descriptor),
+				currentPosition = env.string.length;
+
+			exec(opt.rule, newDescriptor, env);
+			if (!env.error)
+				setDescriptor(descriptor, newDescriptor, opt.set, env);
+			else if (opt.optional &amp;&amp; env.string.length === currentPosition)
+				env.error = false;
+		});
+	}
+
+	/**
+	 * maybe match one element from string with provided rule
+	 * @param  {Rule|Object} rule either a rule instance or an option object
+	 * @return {Rule}          this rule handler
+	 */
+	maybeOne(rule) {
+		const opt = (typeof rule === &apos;string&apos; || (rule &amp;&amp; rule.__elenpi__)) ? {
+			rule
+		} : rule;
+		opt.optional = true;
+		return this.one(opt);
+	}
+
+	/**
+	 * skip current descriptor
+	 * @return {Rule}          this rule handler
+	 */
+	skip() {
+		return this.done((env, descriptor) =&gt; {
+			descriptor.skip = true;
+		});
+	}
+
+	/**
+	 * match a space (any spaces, or carriage returns, or new lines)
+	 * @param  {Boolean} needed true if space is needed. false otherwise.
+	 * @return {Rule}          this rule handler
+	 */
+	space(needed = false) {
+		return this.done((env) =&gt; {
+			if (!env.string.length) {
+				if (needed)
+					env.error = true;
+				return;
+			}
+			const cap = (env.parser.rules.space || defaultSpaceRegExp).exec(env.string);
+			if (cap)
+				env.string = env.string.substring(cap[0].length);
+			else if (needed)
+				env.error = true;
+		});
+	}
+
+	/**
+	 * match the end of string
+	 * @return {Rule}          this rule handler
+	 */
+	end() {
+		return this.done((env) =&gt; {
+			if (env.string.length)
+				env.error = true;
+		});
+	}
+
+	/**
+	 * force end parsing with error. Only aimed to be used in .oneOf().
+	 * @param  {String} msg the error message.
+	 * @return {Rule}          this rule handler
+	 */
+	error(msg) {
+		return this.done((env) =&gt; {
+			env.error = true;
+			env.errorMessage = msg;
+		});
+	}
+}
+
+function setDescriptor(descriptor, newDescriptor, set, env) {
+	if (!newDescriptor.skip &amp;&amp; set)
+		if (typeof set === &apos;string&apos;)
+			descriptor[set] = newDescriptor;
+		else
+			set(env, descriptor, newDescriptor);
+}
+
+const r = {};
+
+Object.getOwnPropertyNames(Rule.prototype) // because Babel make prototype methods not enumerable
+	.forEach((key) =&gt; {
+		if (typeof Rule.prototype[key] === &apos;function&apos;)
+			r[key] = function() {
+				const rule = new Rule();
+				return rule[key].apply(rule, arguments);
+			};
+	});
+
+/**
+ * Rule initializer object (all the Rul&apos;s API for starting rule&apos;s sentences)
+ * @type {Object}
+ * @public
+ * @static
+ */
+Rule.initializer = r;
+
+export default Rule;
+
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.5.2)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
