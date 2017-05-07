@@ -1,7 +1,7 @@
 /*
 * @Author: Gilles Coomans
 * @Last Modified by:   Gilles Coomans
-* @Last Modified time: 2017-03-17 15:20:54
+* @Last Modified time: 2017-05-07 23:42:17
 */
 
 /**
@@ -45,8 +45,9 @@ class Parser {
 	/**
 	 * Parse provided string with specific rule
 	 * @param  {String} string     the string to parse
-	 * @param  {String} rule       the name of the rule to apply. default is null (will use parser's default method if not provided).
-	 * @param  {Object} descriptor the main descriptor object
+	 * @param  {?String} rule       the name of the rule to apply. default is null (will use parser's default method if not provided).
+	 * @param  {?Object} descriptor the main descriptor object
+	 * @param  {?Object} env 		the env object (internal object used while parsing)
 	 * @return {Object}            the decorated descriptor
 	 * @throws {Error} If parsing fail (for any reason)
 	 */
