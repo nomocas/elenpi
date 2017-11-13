@@ -51,10 +51,10 @@ class Parser {
 	 * @return {Object}            the decorated descriptor
 	 * @throws {Error} If parsing fail (for any reason)
 	 */
-	parse(string, rule = null, descriptor = {}, env = null) {
-		env = env || {};
+	parse(string, rule = null, descriptor = {}, env = {}) {
 		env.parser = this;
 		env.string = string;
+		env.lastPosition = env.lastPosition || 0;
 		rule = rule || this.getRule(this.defaultRule);
 		Parser.exec(rule, descriptor, env);
 		if (!env.error && env.string.length) {
@@ -86,7 +86,7 @@ class Parser {
 
 		const rules = rule._queue;
 		for (let i = 0, len = rules.length; i < len; ++i) {
-			rules[i](env, descriptor);
+			rules[i](env, descriptor, env.lastPosition);
 			if (env.error)
 				break;
 		}

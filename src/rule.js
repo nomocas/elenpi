@@ -60,7 +60,7 @@ class Rule {
 	 * @return {Rule}          this rule handler
 	 */
 	terminal(reg, set) {
-		return this.done((env, descriptor) => {
+		return this.done((env, descriptor, startIndex) => {
 			if (!env.string.length) {
 				env.error = true;
 				return;
@@ -68,11 +68,12 @@ class Rule {
 			const cap = reg.exec(env.string);
 			if (cap) {
 				env.string = env.string.substring(cap[0].length);
+				env.lastPosition += cap[0].length;
 				if (set) {
 					if (typeof set === 'string')
 						descriptor[set] = cap[0];
 					else
-						set(env, descriptor, cap);
+						set(env, descriptor, cap, startIndex, env.lastPosition);
 				}
 			} else
 				env.error = true;
@@ -88,8 +89,10 @@ class Rule {
 		return this.done((env) => {
 			if (!env.string.length || env.string[0] !== test)
 				env.error = true;
-			else
+			else {
 				env.string = env.string.substring(1);
+				env.lastPosition += 1;
+			}
 		});
 	}
 
