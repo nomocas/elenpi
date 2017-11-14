@@ -20,7 +20,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'a');
 
 		it("should throw whith an error containing line-col numbers", () => {
-			expect(parser.parse.bind(parser, 'b')).to.throws('Parsing failed : no rules matched : (line:1 , col:0) near :\n');
+			expect(parser.parse.bind(parser, 'b')).to.throws('Parsing failed : no rules matched : (line:1 , col:0) near : b');
 		});
 	});
 
@@ -126,7 +126,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'c');
 
 		it("should throw", () => {
-			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near : a');
 		});
 	});
 
@@ -152,7 +152,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'a');
 
 		it("should throw", () => {
-			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near : ab');
 		});
 	});
 
@@ -165,7 +165,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'a');
 
 		it("should throw", () => {
-			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'a')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near : a');
 		});
 	});
 
@@ -178,7 +178,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'a');
 
 		it("should parse correctly and catch value", () => {
-			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'ab')).to.throw('Parsing failed : no rules matched : (line:1 , col:1) near : a');
 		});
 	});
 
@@ -211,7 +211,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'd');
 
 		it("should fail", () => {
-			expect(parser.parse.bind(parser, 'aba')).to.throw('Parsing failed : no rules matched : (line:1 , col:2) near :\n');
+			expect(parser.parse.bind(parser, 'aba')).to.throw('Parsing failed : no rules matched : (line:1 , col:2) near : aba');
 		});
 	});
 	describe("multiple terminal rule that fail on line other line than 1", () => {
@@ -226,7 +226,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'd');
 
 		it("should fail", () => {
-			expect(parser.parse.bind(parser, 'a\nb\na')).to.throw('Parsing failed : no rules matched : (line:4 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'a\nb\na')).to.throw('Parsing failed : no rules matched : (line:4 , col:1) near : a\nb\na');
 		});
 	});
 
@@ -239,7 +239,7 @@ describe("base rules", () => {
 		const parser = new elenpi.Parser(rules, 'a');
 
 		it("should parse correctly and catch value", () => {
-			expect(parser.parse.bind(parser, 'aaa')).to.throw('Parsing failed : string wasn\'t parsed entierly : (line:1 , col:1) near :\n');
+			expect(parser.parse.bind(parser, 'aaa')).to.throw('Parsing failed : string wasn\'t parsed entierly : (line:1 , col:1) near : aaa');
 		});
 	});
 
