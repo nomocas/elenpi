@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.1"></a>
+## [0.5.1](https://github.com/nomocas/elenpi/compare/v0.5.0...v0.5.1) (2017-11-14)
+
+
+### Bug Fixes
+
+* **error:** print correctly the string near errors ([7099cc3](https://github.com/nomocas/elenpi/commit/7099cc3))
+* **tests:** follow "error print" changes ([7423c1a](https://github.com/nomocas/elenpi/commit/7423c1a))
+
+
+
 <a name="0.5.0"></a>
 # [0.5.0](https://github.com/nomocas/elenpi/compare/v0.4.1...v0.5.0) (2017-11-14)
 
