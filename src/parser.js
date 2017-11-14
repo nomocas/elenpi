@@ -64,7 +64,7 @@ class Parser {
 		if (env.error) {
 			const pos = string.length - env.string.length,
 				posInFile = getPositionInFile(string, pos);
-			throw new Error('Parsing failed : ' + (env.errorMessage || 'no rules matched') + ' : (line:' + posInFile.line + ' , col:' + posInFile.col + ') near :\n', string.substring(pos, pos + 50));
+			throw new Error('Parsing failed : ' + (env.errorMessage || 'no rules matched') + ' : (line:' + posInFile.line + ' , col:' + posInFile.col + ') near : ' + string.substring(Math.max(0, pos-10), pos + 50));
 		}
 		return descriptor;
 	}
