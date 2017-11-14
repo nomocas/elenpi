@@ -4,7 +4,7 @@
  */
 /* global describe, it */
 import chai from 'chai';
-import elenpi from '../src/index.js';
+import elenpi from '../src/index';
 
 const r = elenpi.Rule.initializer;
 const expect = chai.expect;

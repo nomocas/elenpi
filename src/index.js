@@ -3,8 +3,8 @@
  * @author Gilles Coomans
  */
 
-import Parser from './parser.js';
-import Rule from './rule.js';
+import Parser from './parser';
+import Rule from './rule';
 
 /**
  * elenpi export object { Rule, Parser }

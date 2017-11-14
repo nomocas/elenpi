@@ -2,7 +2,7 @@
  * @Author: Gilles Coomans
  */
 
-import Parser from './parser.js';
+import Parser from './parser';
 
 const defaultSpaceRegExp = /^\s+/,
 	exec = Parser.exec;
@@ -41,14 +41,7 @@ class Rule {
 		return this.done((env, descriptor) => {
 			if (typeof rule === 'string')
 				rule = env.parser.getRule(rule);
-			// if (rule.__elenpi__) {
 			exec(rule, descriptor, env);
-			// }
-			/* else if(typeof rule === 'function') {
-				const r = new Rule();
-				rule.apply(r, args);
-				exec(r, descriptor, env);
-			}*/
 		});
 	}
 
